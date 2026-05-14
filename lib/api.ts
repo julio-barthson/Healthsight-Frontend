@@ -68,11 +68,12 @@ api.interceptors.response.use(
       isRefreshing = true
 
       try {
-        // Attempt to refresh the access token using the refresh token cookie
+        const { data } = await api.post("/auth/refresh", {}, { withCredentials: true })
 
-        await api.post("/auth/refresh", {}, { withCredentials: true })
+        if (data?.accessToken) {
+          localStorage.setItem("access_token", data.accessToken)
+        }
 
-        // Refresh succeeded — retry queued requests
         processQueue(null)
         isRefreshing = false
 

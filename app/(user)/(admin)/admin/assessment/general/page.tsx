@@ -185,8 +185,14 @@ function SortableItem({
     isDragging: boolean
   }) => React.ReactNode
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id })
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -198,7 +204,10 @@ function SortableItem({
 
   return (
     <div ref={setNodeRef} style={style}>
-      {children({ dragHandleProps: { ...attributes, ...listeners }, isDragging })}
+      {children({
+        dragHandleProps: { ...attributes, ...listeners },
+        isDragging,
+      })}
     </div>
   )
 }
@@ -213,9 +222,15 @@ export default function GeneralAssessmentPage() {
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(true)
 
-  const [catSheet, setCatSheet] = useState<{ open: boolean; data?: Category }>({ open: false })
-  const [qSheet, setQSheet] = useState<{ open: boolean; data?: Question }>({ open: false })
-  const [pSheet, setPSheet] = useState<{ open: boolean; data?: Period }>({ open: false })
+  const [catSheet, setCatSheet] = useState<{ open: boolean; data?: Category }>({
+    open: false,
+  })
+  const [qSheet, setQSheet] = useState<{ open: boolean; data?: Question }>({
+    open: false,
+  })
+  const [pSheet, setPSheet] = useState<{ open: boolean; data?: Period }>({
+    open: false,
+  })
   const [deleteTarget, setDeleteTarget] = useState<{
     type: "categories" | "questions" | "periods"
     id: string
@@ -231,12 +246,13 @@ export default function GeneralAssessmentPage() {
   async function fetchAll() {
     setLoading(true)
     try {
-      const [periodsRes, questionsRes, categoriesRes, rolesRes] = await Promise.all([
-        api.get("/assessment/periods?type=GENERAL"),
-        api.get("/assessment/questions?type=GENERAL"),
-        api.get("/assessment/categories?type=GENERAL"),
-        api.get("/roles"),
-      ])
+      const [periodsRes, questionsRes, categoriesRes, rolesRes] =
+        await Promise.all([
+          api.get("/assessment/periods?type=GENERAL"),
+          api.get("/assessment/questions?type=GENERAL"),
+          api.get("/assessment/categories?type=GENERAL"),
+          api.get("/roles"),
+        ])
       setPeriods(periodsRes.data)
       setQuestions(questionsRes.data)
       setCategories(categoriesRes.data)
@@ -248,7 +264,9 @@ export default function GeneralAssessmentPage() {
     }
   }
 
-  useEffect(() => { fetchAll() }, [])
+  useEffect(() => {
+    fetchAll()
+  }, [])
 
   async function updateStatus(id: string, status: string) {
     try {
@@ -283,16 +301,18 @@ export default function GeneralAssessmentPage() {
 
     const oldIndex = sortedCategories.findIndex((c) => c.id === active.id)
     const newIndex = sortedCategories.findIndex((c) => c.id === over.id)
-    const reordered = arrayMove(sortedCategories, oldIndex, newIndex).map((c, idx) => ({
-      ...c,
-      order: idx + 1,
-    }))
+    const reordered = arrayMove(sortedCategories, oldIndex, newIndex).map(
+      (c, idx) => ({
+        ...c,
+        order: idx + 1,
+      })
+    )
 
     setCategories(reordered)
     reordered.forEach((cat) => {
-      api.patch(`/assessment/categories/${cat.id}`, { order: cat.order }).catch(() =>
-        toast.error("Failed to save category order")
-      )
+      api
+        .patch(`/assessment/categories/${cat.id}`, { order: cat.order })
+        .catch(() => toast.error("Failed to save category order"))
     })
   }
 
@@ -304,10 +324,12 @@ export default function GeneralAssessmentPage() {
       const catQuestions = getSortedQuestionsForCategory(catId)
       const oldIndex = catQuestions.findIndex((q) => q.id === active.id)
       const newIndex = catQuestions.findIndex((q) => q.id === over.id)
-      const reordered = arrayMove(catQuestions, oldIndex, newIndex).map((q, idx) => ({
-        ...q,
-        order: idx + 1,
-      }))
+      const reordered = arrayMove(catQuestions, oldIndex, newIndex).map(
+        (q, idx) => ({
+          ...q,
+          order: idx + 1,
+        })
+      )
 
       setQuestions((prev) => {
         const others = prev.filter((q) => q.category.id !== catId)
@@ -315,9 +337,9 @@ export default function GeneralAssessmentPage() {
       })
 
       reordered.forEach((q) => {
-        api.patch(`/assessment/questions/${q.id}`, { order: q.order }).catch(() =>
-          toast.error("Failed to save question order")
-        )
+        api
+          .patch(`/assessment/questions/${q.id}`, { order: q.order })
+          .catch(() => toast.error("Failed to save question order"))
       })
     }
   }
@@ -351,7 +373,7 @@ export default function GeneralAssessmentPage() {
         {/* Period-card style rows */}
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="rounded-lg border p-4 space-y-3">
+            <div key={i} className="space-y-3 rounded-lg border p-4">
               <div className="flex items-start justify-between">
                 <div className="space-y-2">
                   <Skeleton className="h-5 w-52" />
@@ -381,13 +403,22 @@ export default function GeneralAssessmentPage() {
       <Tabs defaultValue="periods">
         <TabsList>
           <TabsTrigger value="periods">
-            Periods <Badge variant="secondary" className="ml-1.5">{periods.length}</Badge>
+            Periods{" "}
+            <Badge variant="secondary" className="ml-1.5">
+              {periods.length}
+            </Badge>
           </TabsTrigger>
           <TabsTrigger value="questions">
-            Questions <Badge variant="secondary" className="ml-1.5">{questions.length}</Badge>
+            Questions{" "}
+            <Badge variant="secondary" className="ml-1.5">
+              {questions.length}
+            </Badge>
           </TabsTrigger>
           <TabsTrigger value="categories">
-            Categories <Badge variant="secondary" className="ml-1.5">{categories.length}</Badge>
+            Categories{" "}
+            <Badge variant="secondary" className="ml-1.5">
+              {categories.length}
+            </Badge>
           </TabsTrigger>
         </TabsList>
 
@@ -413,48 +444,71 @@ export default function GeneralAssessmentPage() {
             <TableBody>
               {periods.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={7}
+                    className="py-10 text-center text-muted-foreground"
+                  >
                     No assessment periods yet. Create one to get started.
                   </TableCell>
                 </TableRow>
               )}
-              {periods.map((p) => (
+              {periods?.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.title}</TableCell>
                   <TableCell>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[p.status]}`}>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[p.status]}`}
+                    >
                       {p.status}
                     </span>
                   </TableCell>
-                  <TableCell className="text-sm">{format(new Date(p.startDate), "dd MMM yyyy, HH:mm")}</TableCell>
-                  <TableCell className="text-sm">{format(new Date(p.endDate), "dd MMM yyyy, HH:mm")}</TableCell>
+                  <TableCell className="text-sm">
+                    {format(new Date(p.startDate), "dd MMM yyyy, HH:mm")}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {format(new Date(p.endDate), "dd MMM yyyy, HH:mm")}
+                  </TableCell>
                   <TableCell>{p._count.questions}</TableCell>
                   <TableCell>{p._count.submissions}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push(`/admin/assessment/general/${p.id}`)}>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            router.push(`/admin/assessment/general/${p.id}`)
+                          }
+                        >
                           <Eye className="mr-2 h-4 w-4" /> View Results
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setPSheet({ open: true, data: p })}>
+                        <DropdownMenuItem
+                          onClick={() => setPSheet({ open: true, data: p })}
+                        >
                           <Pencil className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {p.status === "DRAFT" && (
-                          <DropdownMenuItem onClick={() => updateStatus(p.id, "ACTIVE")}>
+                          <DropdownMenuItem
+                            onClick={() => updateStatus(p.id, "ACTIVE")}
+                          >
                             Set Active
                           </DropdownMenuItem>
                         )}
                         {p.status === "ACTIVE" && (
-                          <DropdownMenuItem onClick={() => updateStatus(p.id, "CLOSED")}>
+                          <DropdownMenuItem
+                            onClick={() => updateStatus(p.id, "CLOSED")}
+                          >
                             Close Period
                           </DropdownMenuItem>
                         )}
                         {p.status === "CLOSED" && (
-                          <DropdownMenuItem onClick={() => updateStatus(p.id, "ACTIVE")}>
+                          <DropdownMenuItem
+                            onClick={() => updateStatus(p.id, "ACTIVE")}
+                          >
                             Reopen Period
                           </DropdownMenuItem>
                         )}
@@ -463,7 +517,13 @@ export default function GeneralAssessmentPage() {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
-                              onClick={() => setDeleteTarget({ type: "periods", id: p.id, name: p.title })}
+                              onClick={() =>
+                                setDeleteTarget({
+                                  type: "periods",
+                                  id: p.id,
+                                  name: p.title,
+                                })
+                              }
                             >
                               <Trash2 className="mr-2 h-4 w-4" /> Delete
                             </DropdownMenuItem>
@@ -498,12 +558,13 @@ export default function GeneralAssessmentPage() {
               if (catQuestions.length === 0) return null
 
               return (
-                <div key={cat.id} className="rounded-lg border overflow-hidden">
+                <div key={cat.id} className="overflow-hidden rounded-lg border">
                   {/* Category header */}
                   <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2.5">
-                    <span className="font-semibold text-sm">{cat.name}</span>
+                    <span className="text-sm font-semibold">{cat.name}</span>
                     <Badge variant="secondary" className="ml-auto text-xs">
-                      {catQuestions.length} {catQuestions.length === 1 ? "question" : "questions"}
+                      {catQuestions.length}{" "}
+                      {catQuestions.length === 1 ? "question" : "questions"}
                     </Badge>
                   </div>
 
@@ -521,8 +582,10 @@ export default function GeneralAssessmentPage() {
                         <SortableItem key={q.id} id={q.id}>
                           {({ dragHandleProps, isDragging }) => (
                             <div
-                              className={`flex items-start gap-3 border-b last:border-b-0 px-4 py-3 bg-card transition-colors ${
-                                isDragging ? "bg-muted shadow-md" : "hover:bg-muted/30"
+                              className={`flex items-start gap-3 border-b bg-card px-4 py-3 transition-colors last:border-b-0 ${
+                                isDragging
+                                  ? "bg-muted shadow-md"
+                                  : "hover:bg-muted/30"
                               }`}
                             >
                               {/* Drag handle */}
@@ -541,45 +604,73 @@ export default function GeneralAssessmentPage() {
                               </span>
 
                               {/* Question text */}
-                              <p className="flex-1 text-sm leading-snug">{q.text}</p>
+                              <p className="flex-1 text-sm leading-snug">
+                                {q.text}
+                              </p>
 
                               {/* Type */}
-                              <Badge variant="secondary" className="shrink-0 text-xs">
+                              <Badge
+                                variant="secondary"
+                                className="shrink-0 text-xs"
+                              >
                                 {Q_TYPE_LABELS[q.type]}
                               </Badge>
 
                               {/* Roles */}
-                              <div className="hidden shrink-0 flex-wrap gap-1 lg:flex" style={{ maxWidth: 200 }}>
+                              <div
+                                className="hidden shrink-0 flex-wrap gap-1 lg:flex"
+                                style={{ maxWidth: 200 }}
+                              >
                                 {q.roles.length === 0 ? (
-                                  <span className="text-xs text-muted-foreground">All roles</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    All roles
+                                  </span>
                                 ) : (
                                   q.roles.slice(0, 2).map((r) => (
-                                    <Badge key={r.role.id} variant="outline" className="text-xs">
+                                    <Badge
+                                      key={r.role.id}
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
                                       {r.role.label}
                                     </Badge>
                                   ))
                                 )}
                                 {q.roles.length > 2 && (
-                                  <span className="text-xs text-muted-foreground">+{q.roles.length - 2}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    +{q.roles.length - 2}
+                                  </span>
                                 )}
                               </div>
 
                               {/* Actions */}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="shrink-0">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="shrink-0"
+                                  >
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => setQSheet({ open: true, data: q })}>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setQSheet({ open: true, data: q })
+                                    }
+                                  >
                                     <Pencil className="mr-2 h-4 w-4" /> Edit
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     className="text-destructive focus:text-destructive"
                                     onClick={() =>
-                                      setDeleteTarget({ type: "questions", id: q.id, name: q.text.slice(0, 50) })
+                                      setDeleteTarget({
+                                        type: "questions",
+                                        id: q.id,
+                                        name: q.text.slice(0, 50),
+                                      })
                                     }
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -613,7 +704,7 @@ export default function GeneralAssessmentPage() {
           )}
 
           {categories.length > 0 && (
-            <div className="rounded-lg border overflow-hidden">
+            <div className="overflow-hidden rounded-lg border">
               <div className="flex items-center gap-3 border-b bg-muted/40 px-4 py-2 text-xs font-medium text-muted-foreground">
                 <span className="w-4" />
                 <span className="w-8">#</span>
@@ -635,8 +726,10 @@ export default function GeneralAssessmentPage() {
                     <SortableItem key={cat.id} id={cat.id}>
                       {({ dragHandleProps, isDragging }) => (
                         <div
-                          className={`flex items-center gap-3 border-b last:border-b-0 px-4 py-3 bg-card transition-colors ${
-                            isDragging ? "bg-muted shadow-md" : "hover:bg-muted/30"
+                          className={`flex items-center gap-3 border-b bg-card px-4 py-3 transition-colors last:border-b-0 ${
+                            isDragging
+                              ? "bg-muted shadow-md"
+                              : "hover:bg-muted/30"
                           }`}
                         >
                           <button
@@ -648,12 +741,19 @@ export default function GeneralAssessmentPage() {
                             <GripVertical className="h-4 w-4" />
                           </button>
 
-                          <span className="w-8 text-sm text-muted-foreground">{idx + 1}</span>
+                          <span className="w-8 text-sm text-muted-foreground">
+                            {idx + 1}
+                          </span>
 
-                          <span className="flex-1 font-medium text-sm">{cat.name}</span>
+                          <span className="flex-1 text-sm font-medium">
+                            {cat.name}
+                          </span>
 
                           <span className="w-24 text-right text-sm text-muted-foreground">
-                            {cat.questions.length} {cat.questions.length === 1 ? "question" : "questions"}
+                            {cat.questions.length}{" "}
+                            {cat.questions.length === 1
+                              ? "question"
+                              : "questions"}
                           </span>
 
                           <DropdownMenu>
@@ -663,14 +763,22 @@ export default function GeneralAssessmentPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setCatSheet({ open: true, data: cat })}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  setCatSheet({ open: true, data: cat })
+                                }
+                              >
                                 <Pencil className="mr-2 h-4 w-4" /> Edit Name
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={() =>
-                                  setDeleteTarget({ type: "categories", id: cat.id, name: cat.name })
+                                  setDeleteTarget({
+                                    type: "categories",
+                                    id: cat.id,
+                                    name: cat.name,
+                                  })
                                 }
                               >
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -701,7 +809,9 @@ export default function GeneralAssessmentPage() {
         data={qSheet.data}
         categories={sortedCategories}
         roles={roles}
-        questionsInCategory={(catId) => getSortedQuestionsForCategory(catId).length}
+        questionsInCategory={(catId) =>
+          getSortedQuestionsForCategory(catId).length
+        }
         onClose={() => setQSheet({ open: false })}
         onSaved={fetchAll}
       />
@@ -714,12 +824,16 @@ export default function GeneralAssessmentPage() {
         onSaved={fetchAll}
       />
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete permanently?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete <strong>{deleteTarget?.name}</strong>. This cannot be undone.
+              This will permanently delete <strong>{deleteTarget?.name}</strong>
+              . This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -764,7 +878,11 @@ function CategorySheet({
 
   async function onSubmit(values: CategoryFormValues) {
     try {
-      const payload = { ...values, type: "GENERAL", order: data?.order ?? categoriesCount + 1 }
+      const payload = {
+        ...values,
+        type: "GENERAL",
+        order: data?.order ?? categoriesCount + 1,
+      }
       if (data) {
         await api.patch(`/assessment/categories/${data.id}`, payload)
         toast.success("Category updated")
@@ -776,7 +894,9 @@ function CategorySheet({
       onSaved()
     } catch (err: any) {
       const msg = err?.response?.data?.message
-      toast.error(Array.isArray(msg) ? msg.join(", ") : msg || "Failed to save category")
+      toast.error(
+        Array.isArray(msg) ? msg.join(", ") : msg || "Failed to save category"
+      )
     }
   }
 
@@ -796,7 +916,10 @@ function CategorySheet({
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Laboratory Services" {...field} />
+                      <Input
+                        placeholder="e.g. Laboratory Services"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -804,15 +927,21 @@ function CategorySheet({
               />
               {!data && (
                 <p className="text-xs text-muted-foreground">
-                  New categories are added at the bottom. Drag to reorder after creation.
+                  New categories are added at the bottom. Drag to reorder after
+                  creation.
                 </p>
               )}
             </form>
           </Form>
         </div>
         <SheetFooter className="border-t pt-4">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={form.handleSubmit(onSubmit)} disabled={form.formState.isSubmitting}>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={form.handleSubmit(onSubmit)}
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? "Saving..." : "Save Category"}
           </Button>
         </SheetFooter>
@@ -842,9 +971,18 @@ function QuestionSheet({
 }) {
   const form = useForm<QuestionFormValues>({
     resolver: zodResolver(questionSchema),
-    defaultValues: { text: "", type: "YES_NO_NA", categoryId: "", roleIds: [], options: [] },
+    defaultValues: {
+      text: "",
+      type: "YES_NO_NA",
+      categoryId: "",
+      roleIds: [],
+      options: [],
+    },
   })
-  const { fields, append, remove } = useFieldArray({ control: form.control, name: "options" })
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "options",
+  })
   const questionType = form.watch("type")
 
   useEffect(() => {
@@ -858,14 +996,23 @@ function QuestionSheet({
           options: data.options.map((o) => ({ text: o.text })),
         })
       } else {
-        form.reset({ text: "", type: "YES_NO_NA", categoryId: "", roleIds: [], options: [] })
+        form.reset({
+          text: "",
+          type: "YES_NO_NA",
+          categoryId: "",
+          roleIds: [],
+          options: [],
+        })
       }
     }
   }, [open, data])
 
   function toggleRole(roleId: string, checked: boolean) {
     const current = form.getValues("roleIds") ?? []
-    form.setValue("roleIds", checked ? [...current, roleId] : current.filter((id) => id !== roleId))
+    form.setValue(
+      "roleIds",
+      checked ? [...current, roleId] : current.filter((id) => id !== roleId)
+    )
   }
 
   async function onSubmit(values: QuestionFormValues) {
@@ -887,7 +1034,9 @@ function QuestionSheet({
       onSaved()
     } catch (err: any) {
       const msg = err?.response?.data?.message
-      toast.error(Array.isArray(msg) ? msg.join(", ") : msg || "Failed to save question")
+      toast.error(
+        Array.isArray(msg) ? msg.join(", ") : msg || "Failed to save question"
+      )
     }
   }
 
@@ -907,7 +1056,11 @@ function QuestionSheet({
                   <FormItem>
                     <FormLabel>Question Text</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="e.g. Is the laboratory adequately illuminated?" rows={3} {...field} />
+                      <Textarea
+                        placeholder="e.g. Is the laboratory adequately illuminated?"
+                        rows={3}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -922,12 +1075,20 @@ function QuestionSheet({
                     <FormLabel>Answer Type</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="YES_NO_NA">Yes / No / N/A</SelectItem>
-                        <SelectItem value="SINGLE_SELECT">Single Choice</SelectItem>
-                        <SelectItem value="MULTI_SELECT">Multi Choice</SelectItem>
+                        <SelectItem value="YES_NO_NA">
+                          Yes / No / N/A
+                        </SelectItem>
+                        <SelectItem value="SINGLE_SELECT">
+                          Single Choice
+                        </SelectItem>
+                        <SelectItem value="MULTI_SELECT">
+                          Multi Choice
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -943,11 +1104,15 @@ function QuestionSheet({
                     <FormLabel>Category</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {categories.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -958,7 +1123,8 @@ function QuestionSheet({
 
               {!data && (
                 <p className="text-xs text-muted-foreground">
-                  New questions are added at the bottom of the category. Drag to reorder after creation.
+                  New questions are added at the bottom of the category. Drag to
+                  reorder after creation.
                 </p>
               )}
 
@@ -967,17 +1133,32 @@ function QuestionSheet({
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label>Options</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={() => append({ text: "" })}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => append({ text: "" })}
+                    >
                       <Plus className="mr-1 h-3 w-3" /> Add Option
                     </Button>
                   </div>
                   {fields.length === 0 && (
-                    <p className="text-xs text-muted-foreground">No options yet. Add at least two.</p>
+                    <p className="text-xs text-muted-foreground">
+                      No options yet. Add at least two.
+                    </p>
                   )}
                   {fields.map((field, idx) => (
                     <div key={field.id} className="flex gap-2">
-                      <Input placeholder={`Option ${idx + 1}`} {...form.register(`options.${idx}.text`)} />
-                      <Button type="button" variant="ghost" size="icon" onClick={() => remove(idx)}>
+                      <Input
+                        placeholder={`Option ${idx + 1}`}
+                        {...form.register(`options.${idx}.text`)}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => remove(idx)}
+                      >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -995,7 +1176,9 @@ function QuestionSheet({
                 </p>
                 <div className="grid grid-cols-1 gap-2">
                   {roles.map((role) => {
-                    const checked = (form.watch("roleIds") ?? []).includes(role.id)
+                    const checked = (form.watch("roleIds") ?? []).includes(
+                      role.id
+                    )
                     return (
                       <div key={role.id} className="flex items-center gap-2">
                         <Checkbox
@@ -1003,7 +1186,10 @@ function QuestionSheet({
                           checked={checked}
                           onCheckedChange={(v) => toggleRole(role.id, !!v)}
                         />
-                        <Label htmlFor={`role-${role.id}`} className="cursor-pointer font-normal">
+                        <Label
+                          htmlFor={`role-${role.id}`}
+                          className="cursor-pointer font-normal"
+                        >
                           {role.label}
                         </Label>
                       </div>
@@ -1015,8 +1201,13 @@ function QuestionSheet({
           </Form>
         </div>
         <SheetFooter className="border-t pt-4">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={form.handleSubmit(onSubmit)} disabled={form.formState.isSubmitting}>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={form.handleSubmit(onSubmit)}
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? "Saving..." : "Save Question"}
           </Button>
         </SheetFooter>
@@ -1044,7 +1235,13 @@ function PeriodSheet({
 }) {
   const form = useForm<PeriodFormValues>({
     resolver: zodResolver(periodSchema),
-    defaultValues: { title: "", description: "", startDate: "", endDate: "", questionIds: [] },
+    defaultValues: {
+      title: "",
+      description: "",
+      startDate: "",
+      endDate: "",
+      questionIds: [],
+    },
   })
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set())
 
@@ -1052,7 +1249,8 @@ function PeriodSheet({
     if (!open) return
     if (data) {
       api.get(`/assessment/periods/${data.id}`).then((res) => {
-        const existing = res.data.questions?.map((pq: any) => pq.question.id) ?? []
+        const existing =
+          res.data.questions?.map((pq: any) => pq.question.id) ?? []
         form.reset({
           title: data.title,
           description: data.description ?? "",
@@ -1061,19 +1259,30 @@ function PeriodSheet({
           questionIds: existing,
         })
         const cats = new Set(
-          questions.filter((q) => existing.includes(q.id)).map((q) => q.category.id)
+          questions
+            .filter((q) => existing.includes(q.id))
+            .map((q) => q.category.id)
         )
         setExpandedCats(cats)
       })
     } else {
-      form.reset({ title: "", description: "", startDate: "", endDate: "", questionIds: [] })
+      form.reset({
+        title: "",
+        description: "",
+        startDate: "",
+        endDate: "",
+        questionIds: [],
+      })
       setExpandedCats(new Set())
     }
   }, [open, data])
 
   function toggleQuestion(qId: string, checked: boolean) {
     const current = form.getValues("questionIds") ?? []
-    form.setValue("questionIds", checked ? [...current, qId] : current.filter((id) => id !== qId))
+    form.setValue(
+      "questionIds",
+      checked ? [...current, qId] : current.filter((id) => id !== qId)
+    )
   }
 
   function toggleCategory(catId: string) {
@@ -1085,12 +1294,19 @@ function PeriodSheet({
   }
 
   function selectAllInCategory(catId: string, checked: boolean) {
-    const catQuestionIds = questions.filter((q) => q.category.id === catId).map((q) => q.id)
+    const catQuestionIds = questions
+      .filter((q) => q.category.id === catId)
+      .map((q) => q.id)
     const current = form.getValues("questionIds") ?? []
     if (checked) {
-      form.setValue("questionIds", [...new Set([...current, ...catQuestionIds])])
+      form.setValue("questionIds", [
+        ...new Set([...current, ...catQuestionIds]),
+      ])
     } else {
-      form.setValue("questionIds", current.filter((id) => !catQuestionIds.includes(id)))
+      form.setValue(
+        "questionIds",
+        current.filter((id) => !catQuestionIds.includes(id))
+      )
     }
   }
 
@@ -1113,7 +1329,9 @@ function PeriodSheet({
       onSaved()
     } catch (err: any) {
       const msg = err?.response?.data?.message
-      toast.error(Array.isArray(msg) ? msg.join(", ") : msg || "Failed to save period")
+      toast.error(
+        Array.isArray(msg) ? msg.join(", ") : msg || "Failed to save period"
+      )
     }
   }
 
@@ -1123,7 +1341,9 @@ function PeriodSheet({
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent className="flex w-full max-w-lg flex-col gap-0 sm:max-w-lg">
         <SheetHeader className="border-b pb-4">
-          <SheetTitle>{data ? "Edit Period" : "New Assessment Period"}</SheetTitle>
+          <SheetTitle>
+            {data ? "Edit Period" : "New Assessment Period"}
+          </SheetTitle>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-4 py-6">
           <Form {...form}>
@@ -1135,7 +1355,10 @@ function PeriodSheet({
                   <FormItem>
                     <FormLabel>Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. Q1 2025 General Assessment" {...field} />
+                      <Input
+                        placeholder="e.g. Q1 2025 General Assessment"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1148,7 +1371,11 @@ function PeriodSheet({
                   <FormItem>
                     <FormLabel>Description (optional)</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Brief note about this assessment period..." rows={2} {...field} />
+                      <Textarea
+                        placeholder="Brief note about this assessment period..."
+                        rows={2}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1160,7 +1387,9 @@ function PeriodSheet({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Start Date & Time</FormLabel>
-                    <FormControl><Input type="datetime-local" {...field} /></FormControl>
+                    <FormControl>
+                      <Input type="datetime-local" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1171,7 +1400,9 @@ function PeriodSheet({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>End Date & Time</FormLabel>
-                    <FormControl><Input type="datetime-local" {...field} /></FormControl>
+                    <FormControl>
+                      <Input type="datetime-local" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -1183,12 +1414,15 @@ function PeriodSheet({
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Questions</Label>
-                  <span className="text-xs text-muted-foreground">{selectedIds.length} selected</span>
+                  <span className="text-xs text-muted-foreground">
+                    {selectedIds.length} selected
+                  </span>
                 </div>
 
                 {categories.length === 0 && (
                   <p className="text-xs text-muted-foreground">
-                    No questions available. Create categories and questions first.
+                    No questions available. Create categories and questions
+                    first.
                   </p>
                 )}
 
@@ -1198,7 +1432,9 @@ function PeriodSheet({
                     .sort((a, b) => a.order - b.order)
                   if (catQs.length === 0) return null
                   const expanded = expandedCats.has(cat.id)
-                  const selectedInCat = catQs.filter((q) => selectedIds.includes(q.id)).length
+                  const selectedInCat = catQs.filter((q) =>
+                    selectedIds.includes(q.id)
+                  ).length
                   const allSelected = selectedInCat === catQs.length
 
                   return (
@@ -1214,7 +1450,9 @@ function PeriodSheet({
                           <ChevronRight className="h-4 w-4 shrink-0" />
                         )}
                         <span className="flex-1 font-medium">{cat.name}</span>
-                        <span className="text-xs text-muted-foreground">{selectedInCat}/{catQs.length}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {selectedInCat}/{catQs.length}
+                        </span>
                       </button>
 
                       {expanded && (
@@ -1223,9 +1461,14 @@ function PeriodSheet({
                             <Checkbox
                               id={`cat-all-${cat.id}`}
                               checked={allSelected}
-                              onCheckedChange={(v) => selectAllInCategory(cat.id, !!v)}
+                              onCheckedChange={(v) =>
+                                selectAllInCategory(cat.id, !!v)
+                              }
                             />
-                            <Label htmlFor={`cat-all-${cat.id}`} className="cursor-pointer text-xs text-muted-foreground">
+                            <Label
+                              htmlFor={`cat-all-${cat.id}`}
+                              className="cursor-pointer text-xs text-muted-foreground"
+                            >
                               Select all in this category
                             </Label>
                           </div>
@@ -1234,11 +1477,18 @@ function PeriodSheet({
                               <Checkbox
                                 id={`q-${q.id}`}
                                 checked={selectedIds.includes(q.id)}
-                                onCheckedChange={(v) => toggleQuestion(q.id, !!v)}
+                                onCheckedChange={(v) =>
+                                  toggleQuestion(q.id, !!v)
+                                }
                                 className="mt-0.5"
                               />
-                              <Label htmlFor={`q-${q.id}`} className="cursor-pointer text-sm leading-snug font-normal">
-                                <span className="mr-1 text-xs text-muted-foreground">{idx + 1}.</span>
+                              <Label
+                                htmlFor={`q-${q.id}`}
+                                className="cursor-pointer text-sm leading-snug font-normal"
+                              >
+                                <span className="mr-1 text-xs text-muted-foreground">
+                                  {idx + 1}.
+                                </span>
                                 {q.text}
                               </Label>
                             </div>
@@ -1253,8 +1503,13 @@ function PeriodSheet({
           </Form>
         </div>
         <SheetFooter className="border-t pt-4">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={form.handleSubmit(onSubmit)} disabled={form.formState.isSubmitting}>
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            onClick={form.handleSubmit(onSubmit)}
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? "Saving..." : "Save Period"}
           </Button>
         </SheetFooter>

@@ -51,14 +51,18 @@ export default function StaffDashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get("/assessment/my")
-      .then((res) => setPeriods(res.data))
+    api
+      .get("/assessment/my")
+      .then((res) => setPeriods(res.data.open ?? []))
       .catch(() => toast.error("Failed to load assessments"))
       .finally(() => setLoading(false))
   }, [])
 
   const completed = periods.filter(
-    (p) => p.mySubmission && p.mySubmission.answeredCount === p.questions.length && p.questions.length > 0
+    (p) =>
+      p.mySubmission &&
+      p.mySubmission.answeredCount === p.questions.length &&
+      p.questions.length > 0
   )
   const inProgress = periods.filter(
     (p) => p.mySubmission && p.mySubmission.answeredCount < p.questions.length
@@ -66,7 +70,8 @@ export default function StaffDashboardPage() {
   const notStarted = periods.filter((p) => !p.mySubmission)
 
   const totalAnswered = periods.reduce(
-    (sum, p) => sum + (p.mySubmission?.answeredCount ?? 0), 0
+    (sum, p) => sum + (p.mySubmission?.answeredCount ?? 0),
+    0
   )
 
   return (
@@ -79,7 +84,9 @@ export default function StaffDashboardPage() {
           </h1>
           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             {user?.roles?.map((r) => (
-              <Badge key={r.id} variant="secondary">{r.label}</Badge>
+              <Badge key={r.id} variant="secondary">
+                {r.label}
+              </Badge>
             ))}
             {(user?.phc || user?.lga || user?.district) && (
               <>
@@ -102,7 +109,9 @@ export default function StaffDashboardPage() {
       {/* ── STATS ───────────────────────────────────────────────────────────── */}
       {loading ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-lg" />)}
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-lg" />
+          ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -146,14 +155,18 @@ export default function StaffDashboardPage() {
 
         {loading && (
           <div className="space-y-3">
-            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 rounded-lg" />)}
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-32 rounded-lg" />
+            ))}
           </div>
         )}
 
         {!loading && periods.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-14 text-center">
             <ClipboardList className="mb-3 h-10 w-10 text-muted-foreground" />
-            <p className="font-medium text-muted-foreground">No active assessments</p>
+            <p className="font-medium text-muted-foreground">
+              No active assessments
+            </p>
             <p className="mt-1 text-sm text-muted-foreground">
               You have no assessments assigned to your role right now.
             </p>
@@ -162,13 +175,14 @@ export default function StaffDashboardPage() {
 
         {!loading && periods.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {periods.map((p) => {
+            {periods?.map((p) => {
               const sub = p.mySubmission
               const total = p.questions.length
               const answered = sub?.answeredCount ?? 0
               const pct = total > 0 ? Math.round((answered / total) * 100) : 0
               const isComplete = answered === total && total > 0
-              const isExpiringSoon = !isPast(new Date(p.endDate)) &&
+              const isExpiringSoon =
+                !isPast(new Date(p.endDate)) &&
                 new Date(p.endDate).getTime() - Date.now() < 24 * 60 * 60 * 1000
 
               return (
@@ -177,15 +191,19 @@ export default function StaffDashboardPage() {
                   className="group relative flex flex-col justify-between rounded-lg border bg-card p-5 transition-shadow hover:shadow-md"
                 >
                   {isComplete && (
-                    <div className="absolute right-3 top-3">
+                    <div className="absolute top-3 right-3">
                       <CheckCircle2 className="h-5 w-5 text-green-500" />
                     </div>
                   )}
 
                   <div className="space-y-2">
-                    <h3 className="pr-6 font-semibold leading-snug">{p.title}</h3>
+                    <h3 className="pr-6 leading-snug font-semibold">
+                      {p.title}
+                    </h3>
                     {p.description && (
-                      <p className="line-clamp-2 text-xs text-muted-foreground">{p.description}</p>
+                      <p className="line-clamp-2 text-xs text-muted-foreground">
+                        {p.description}
+                      </p>
                     )}
 
                     <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -196,7 +214,10 @@ export default function StaffDashboardPage() {
                           : `Closes ${formatDistanceToNow(new Date(p.endDate), { addSuffix: true })}`}
                       </span>
                       {isExpiringSoon && !isComplete && (
-                        <Badge variant="destructive" className="text-xs px-1.5 py-0">
+                        <Badge
+                          variant="destructive"
+                          className="px-1.5 py-0 text-xs"
+                        >
                           Closing soon
                         </Badge>
                       )}
@@ -206,7 +227,9 @@ export default function StaffDashboardPage() {
                   <div className="mt-4 space-y-3">
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>{answered}/{total} questions answered</span>
+                        <span>
+                          {answered}/{total} questions answered
+                        </span>
                         <span>{pct}%</span>
                       </div>
                       <Progress value={pct} className="h-1.5" />
@@ -219,7 +242,11 @@ export default function StaffDashboardPage() {
                       variant={isComplete ? "outline" : "default"}
                     >
                       <Link href={`/assessment/${p.id}`}>
-                        {isComplete ? "Review Submission" : !sub ? "Start Assessment" : "Continue"}
+                        {isComplete
+                          ? "Review Submission"
+                          : !sub
+                            ? "Start Assessment"
+                            : "Continue"}
                         <ChevronRight className="ml-1 h-4 w-4" />
                       </Link>
                     </Button>
@@ -276,7 +303,7 @@ function StatCard({
   bg: string
 }) {
   return (
-    <div className={`rounded-lg border p-4 space-y-2 ${bg}`}>
+    <div className={`space-y-2 rounded-lg border p-4 ${bg}`}>
       <div className="flex items-center gap-2">
         {icon}
         <span className="text-xs text-muted-foreground">{label}</span>

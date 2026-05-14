@@ -70,6 +70,8 @@ type Results = {
     title: string
     description?: string
     type: string
+    quarter: string | null
+    year: number | null
     status: string
     startDate: string
     endDate: string
@@ -78,6 +80,8 @@ type Results = {
     totalEligible: number
     totalSubmitted: number
     completionRate: number
+    complianceScore: number | null
+    categoryCompliance: { name: string; score: number }[] | null
   }
   questions: QuestionStat[]
   submissions: SubmissionSummary[]
@@ -187,7 +191,7 @@ export default function PeriodResultsPage() {
       />
 
       {/* ── STATS CARDS ─────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+      <div className={`grid grid-cols-1 gap-2 ${period.type === "SAFECARE" ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
         <StatCard
           icon={<Users className="h-5 w-5 text-blue-600" />}
           label="Eligible Staff"
@@ -203,14 +207,51 @@ export default function PeriodResultsPage() {
         <div className="space-y-2 rounded-lg border p-4">
           <div className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-primary" />
-            <span className="text-sm text-muted-foreground">
-              Completion Rate
-            </span>
+            <span className="text-sm text-muted-foreground">Completion Rate</span>
           </div>
           <p className="text-2xl font-bold">{stats.completionRate}%</p>
           <Progress value={stats.completionRate} className="h-2" />
         </div>
+        {period.type === "SAFECARE" && stats.complianceScore !== null && (
+          <div className={`space-y-2 rounded-lg border p-4 ${stats.complianceScore >= 75 ? "bg-green-50 dark:bg-green-950" : stats.complianceScore >= 50 ? "bg-amber-50 dark:bg-amber-950" : "bg-red-50 dark:bg-red-950"}`}>
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              <span className="text-sm text-muted-foreground">SafeCare Compliance</span>
+            </div>
+            <p className="text-2xl font-bold">{stats.complianceScore}%</p>
+            <Progress
+              value={stats.complianceScore}
+              className={`h-2 ${stats.complianceScore >= 75 ? "[&>*]:bg-green-500" : stats.complianceScore >= 50 ? "[&>*]:bg-amber-400" : "[&>*]:bg-red-500"}`}
+            />
+          </div>
+        )}
       </div>
+
+      {/* ── SAFECARE CATEGORY COMPLIANCE ────────────────────────────────────── */}
+      {period.type === "SAFECARE" && stats.categoryCompliance && stats.categoryCompliance.length > 0 && (
+        <>
+          <Separator />
+          <div className="space-y-3">
+            <h2 className="text-base font-medium">Compliance by Domain</h2>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {stats.categoryCompliance.map((cat) => (
+                <div key={cat.name} className="rounded-lg border p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium leading-tight">{cat.name}</p>
+                    <span className={`shrink-0 text-sm font-bold ${cat.score >= 75 ? "text-green-600" : cat.score >= 50 ? "text-amber-600" : "text-red-600"}`}>
+                      {cat.score}%
+                    </span>
+                  </div>
+                  <Progress
+                    value={cat.score}
+                    className={`h-1.5 ${cat.score >= 75 ? "[&>*]:bg-green-500" : cat.score >= 50 ? "[&>*]:bg-amber-400" : "[&>*]:bg-red-500"}`}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       <Separator />
 

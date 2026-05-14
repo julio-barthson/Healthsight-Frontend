@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Users, Building2, Clock, ShieldCheck, ClipboardList, BarChart3, CheckCircle2 } from "lucide-react"
+import {
+  Users,
+  Building2,
+  Clock,
+  ShieldCheck,
+  ClipboardList,
+  BarChart3,
+  CheckCircle2,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -14,7 +22,12 @@ type Stats = {
   users: { total: number; active: number; pending: number }
   phcs: { total: number }
   assessment: {
-    activePeriods: { id: string; title: string; type: string; submissions: number }[]
+    activePeriods: {
+      id: string
+      title: string
+      type: string
+      submissions: number
+    }[]
     totalSubmissions: number
   }
 }
@@ -29,7 +42,9 @@ type AdminUser = {
 }
 
 function timeAgo(dateStr: string): string {
-  const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000)
+  const days = Math.floor(
+    (Date.now() - new Date(dateStr).getTime()) / 86_400_000
+  )
   if (days < 1) return "Today"
   if (days < 7) return `${days}d ago`
   if (days < 30) return `${Math.floor(days / 7)}w ago`
@@ -55,7 +70,11 @@ export default function AdminDashboardPage() {
         setStats(statsRes.data)
         setRecentUsers(
           [...usersRes.data]
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+            )
             .slice(0, 6)
         )
       })
@@ -103,7 +122,9 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map(({ label, value, sub, icon: Icon, bg, href }) => (
           <Link key={label} href={href} className="group">
-            <div className={`${bg} flex items-center justify-between rounded-xl px-6 py-5 text-white transition-opacity group-hover:opacity-90`}>
+            <div
+              className={`${bg} flex items-center justify-between rounded-xl px-6 py-5 text-white transition-opacity group-hover:opacity-90`}
+            >
               <div>
                 <p className="text-sm font-medium opacity-90">{label}</p>
                 {loading ? (
@@ -122,7 +143,7 @@ export default function AdminDashboardPage() {
       {/* ── ACTIVE ASSESSMENT PERIODS ───────────────────────────────── */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
             Active Assessment Periods
           </h2>
           <Button variant="ghost" size="sm" asChild>
@@ -139,28 +160,32 @@ export default function AdminDashboardPage() {
         )}
 
         {!loading &&
-          stats?.assessment.activePeriods.map((p) => (
+          stats?.assessment.activePeriods?.map((p) => (
             <div
               key={p.id}
               className="flex items-center justify-between rounded-lg border bg-card px-5 py-4"
             >
               <div className="flex items-center gap-3">
                 {p.type === "SAFECARE" ? (
-                  <ShieldCheck className="h-5 w-5 text-blue-500 shrink-0" />
+                  <ShieldCheck className="h-5 w-5 shrink-0 text-blue-500" />
                 ) : (
-                  <BarChart3 className="h-5 w-5 text-primary shrink-0" />
+                  <BarChart3 className="h-5 w-5 shrink-0 text-primary" />
                 )}
                 <div>
-                  <p className="font-medium text-sm">{p.title}</p>
+                  <p className="text-sm font-medium">{p.title}</p>
                   <p className="text-xs text-muted-foreground">
                     {p.submissions} submission{p.submissions !== 1 ? "s" : ""}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Badge className="bg-green-100 text-green-700 text-xs">ACTIVE</Badge>
+                <Badge className="bg-green-100 text-xs text-green-700">
+                  ACTIVE
+                </Badge>
                 <Button size="sm" variant="outline" asChild>
-                  <Link href={`/admin/assessment/general/${p.id}`}>Results</Link>
+                  <Link href={`/admin/assessment/general/${p.id}`}>
+                    Results
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -182,7 +207,10 @@ export default function AdminDashboardPage() {
           <CardContent className="divide-y p-0">
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="flex items-center justify-between px-6 py-4">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between px-6 py-4"
+                  >
                     <div className="space-y-1.5">
                       <Skeleton className="h-4 w-40" />
                       <Skeleton className="h-3 w-24" />
@@ -191,7 +219,10 @@ export default function AdminDashboardPage() {
                   </div>
                 ))
               : recentUsers.map((u) => (
-                  <div key={u.id} className="flex items-center justify-between px-6 py-4">
+                  <div
+                    key={u.id}
+                    className="flex items-center justify-between px-6 py-4"
+                  >
                     <div>
                       <p className="text-sm font-medium">
                         {u.firstName} {u.lastName}
@@ -202,10 +233,14 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {u.accountStatus === "PENDING" && (
-                        <Badge className="bg-amber-100 text-amber-700 text-xs">Pending</Badge>
+                        <Badge className="bg-amber-100 text-xs text-amber-700">
+                          Pending
+                        </Badge>
                       )}
                       {isNew(u.createdAt) && u.accountStatus !== "PENDING" && (
-                        <Badge className="bg-blue-100 text-blue-700 text-xs">New</Badge>
+                        <Badge className="bg-blue-100 text-xs text-blue-700">
+                          New
+                        </Badge>
                       )}
                       <span className="text-xs text-muted-foreground">
                         {timeAgo(u.createdAt)}
@@ -223,23 +258,42 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="p-0">
             {[
-              { label: "Review pending users", href: "/admin/pending-users", icon: Clock, badge: stats?.users.pending },
-              { label: "General Assessment", href: "/admin/assessment/general", icon: ClipboardList },
-              { label: "SafeCare Assessment", href: "/admin/assessment/safecare", icon: ShieldCheck },
-              { label: "PHC Map View", href: "/admin/phcs/map", icon: Building2 },
+              {
+                label: "Review pending users",
+                href: "/admin/pending-users",
+                icon: Clock,
+                badge: stats?.users.pending,
+              },
+              {
+                label: "General Assessment",
+                href: "/admin/assessment/general",
+                icon: ClipboardList,
+              },
+              {
+                label: "SafeCare Assessment",
+                href: "/admin/assessment/safecare",
+                icon: ShieldCheck,
+              },
+              {
+                label: "PHC Map View",
+                href: "/admin/phcs/map",
+                icon: Building2,
+              },
               { label: "User Management", href: "/admin/users", icon: Users },
             ].map(({ label, href, icon: Icon, badge }) => (
               <Link
                 key={href}
                 href={href}
-                className="flex items-center justify-between px-6 py-4 text-sm hover:bg-muted/50 transition-colors border-b last:border-0"
+                className="flex items-center justify-between border-b px-6 py-4 text-sm transition-colors last:border-0 hover:bg-muted/50"
               >
                 <span className="flex items-center gap-3">
                   <Icon className="h-4 w-4 text-muted-foreground" />
                   {label}
                 </span>
                 {badge !== undefined && badge > 0 && (
-                  <Badge className="bg-amber-100 text-amber-700 text-xs">{badge}</Badge>
+                  <Badge className="bg-amber-100 text-xs text-amber-700">
+                    {badge}
+                  </Badge>
                 )}
               </Link>
             ))}

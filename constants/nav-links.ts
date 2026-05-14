@@ -18,6 +18,10 @@ import {
   IconClipboardText,
   IconMap,
   IconClipboardData,
+  IconStethoscope,
+  IconUserSearch,
+  IconReportMedical,
+  IconUserCheck,
 } from "@tabler/icons-react"
 
 // ── Tenant / CLIENT nav ────────────────────────────────────────────────────────
@@ -130,7 +134,7 @@ export const landlordNavLinks = [
   },
 ]
 
-// ── Healthsight staff nav ─────────────────────────────────────────────────────
+// ── Healthsight staff nav (fallback) ──────────────────────────────────────────
 
 export const healthStaffNavLinks = [
   {
@@ -143,6 +147,44 @@ export const healthStaffNavLinks = [
     slug: "/assessment",
     icon: IconClipboardText,
   },
+]
+
+// ── Clinical nav ───────────────────────────────────────────────────────────────
+
+const clinicalBase = [
+  { label: "Dashboard", slug: "/dashboard", icon: IconLayoutDashboard },
+  { label: "My Assessments", slug: "/assessment", icon: IconClipboardText },
+  { label: "Patients", slug: "/patients", icon: IconUserSearch },
+]
+
+export const doctorNavLinks = [
+  ...clinicalBase,
+  { label: "Screenings", slug: "/screenings", icon: IconStethoscope },
+  { label: "Appointments", slug: "/appointments", icon: IconCalendar },
+  { label: "Reports", slug: "/reports", icon: IconReportMedical },
+]
+
+export const nurseNavLinks = [
+  ...clinicalBase,
+  { label: "Screenings", slug: "/screenings", icon: IconStethoscope },
+]
+
+export const mlsNavLinks = [
+  ...clinicalBase,
+  { label: "Screenings", slug: "/screenings", icon: IconStethoscope },
+]
+
+export const himNavLinks = [
+  ...clinicalBase,
+  { label: "Appointments", slug: "/appointments", icon: IconCalendar },
+  { label: "Reports", slug: "/reports", icon: IconReportMedical },
+]
+
+export const choNavLinks = [
+  ...clinicalBase,
+  { label: "Screenings", slug: "/screenings", icon: IconStethoscope },
+  { label: "Dividers", slug: "/dividers", icon: IconUsersGroup },
+  { label: "Volunteers", slug: "/volunteers", icon: IconUserCheck },
 ]
 
 // ── Admin nav (Healthsight) ────────────────────────────────────────────────────
@@ -188,4 +230,11 @@ export const adminNavLinks = [
     slug: "/admin/roles",
     icon: IconUsersGroup,
   },
+  // Clinical
+  { label: "Patients", slug: "/patients", icon: IconUserSearch },
+  { label: "Screenings", slug: "/screenings", icon: IconStethoscope },
+  { label: "Appointments", slug: "/appointments", icon: IconCalendar },
+  { label: "Reports", slug: "/reports", icon: IconReportMedical },
+  { label: "Dividers", slug: "/dividers", icon: IconUsersGroup },
+  { label: "Volunteers", slug: "/volunteers", icon: IconUserCheck },
 ]

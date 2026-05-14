@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -82,6 +82,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import api from "@/lib/api"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -178,6 +179,11 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<AccountStatus | "ALL">("ALL")
 
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const LIMIT = 20
+
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<StaffUser | null>(null)
   const [formLoading, setFormLoading] = useState(false)
@@ -208,20 +214,51 @@ export default function AdminUsersPage() {
     },
   })
 
-  // ── Initial data ───────────────────────────────────────────────────────────
+  // ── Data fetching ──────────────────────────────────────────────────────────
+
+  const fetchUsers = useCallback(
+    async (p: number, q: string, s: AccountStatus | "ALL") => {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams({
+          page: String(p),
+          limit: String(LIMIT),
+          ...(q && { search: q }),
+          ...(s !== "ALL" && { status: s }),
+        })
+        const res = await api.get(`/admin/users?${params}`)
+        setUsers(res.data.data)
+        setTotal(res.data.total)
+        setTotalPages(res.data.totalPages)
+      } finally {
+        setLoading(false)
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
+
+  // Debounce search
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setPage(1)
+      fetchUsers(1, search, statusFilter)
+    }, 300)
+    return () => clearTimeout(t)
+  }, [search, statusFilter, fetchUsers])
 
   useEffect(() => {
-    Promise.all([
-      api.get("/admin/users"),
-      api.get("/roles/all"),
-      api.get("/locations/districts"),
-    ])
-      .then(([usersRes, rolesRes, districtsRes]) => {
-        setUsers(usersRes.data)
+    fetchUsers(page, search, statusFilter)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page])
+
+  useEffect(() => {
+    Promise.all([api.get("/roles/all"), api.get("/locations/districts")]).then(
+      ([rolesRes, districtsRes]) => {
         setRoles(rolesRes.data.filter((r: Role) => r.isActive))
         setDistricts(districtsRes.data)
-      })
-      .finally(() => setLoading(false))
+      }
+    )
   }, [])
 
   // ── Sheet helpers ──────────────────────────────────────────────────────────
@@ -320,8 +357,7 @@ export default function AdminUsersPage() {
           lgaId: values.lgaId || undefined,
           phcId: values.phcId || undefined,
         })
-        const res = await api.get("/admin/users")
-        setUsers(res.data)
+        await fetchUsers(page, search, statusFilter)
         toast.success("Staff account created. Credentials sent to their email.")
       }
       setSheetOpen(false)
@@ -401,26 +437,6 @@ export default function AdminUsersPage() {
     }
   }
 
-  // ── Filtered list ──────────────────────────────────────────────────────────
-
-  const filtered = users.filter((u) => {
-    const matchesSearch = `${u.firstName} ${u.lastName} ${u.email}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-    const matchesStatus =
-      statusFilter === "ALL" || u.accountStatus === statusFilter
-    return matchesSearch && matchesStatus
-  })
-
-  const statusCounts = {
-    ALL: users.length,
-    ACTIVE: users.filter((u) => u.accountStatus === "ACTIVE").length,
-    PENDING: users.filter((u) => u.accountStatus === "PENDING").length,
-    REJECTED: users.filter((u) => u.accountStatus === "REJECTED").length,
-    SUSPENDED: users.filter((u) => u.accountStatus === "SUSPENDED").length,
-    DEACTIVATED: users.filter((u) => u.accountStatus === "DEACTIVATED").length,
-  }
-
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -456,22 +472,12 @@ export default function AdminUsersPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All ({statusCounts.ALL})</SelectItem>
-            <SelectItem value="ACTIVE">
-              Active ({statusCounts.ACTIVE})
-            </SelectItem>
-            <SelectItem value="PENDING">
-              Pending ({statusCounts.PENDING})
-            </SelectItem>
-            <SelectItem value="REJECTED">
-              Rejected ({statusCounts.REJECTED})
-            </SelectItem>
-            <SelectItem value="SUSPENDED">
-              Suspended ({statusCounts.SUSPENDED})
-            </SelectItem>
-            <SelectItem value="DEACTIVATED">
-              Deactivated ({statusCounts.DEACTIVATED})
-            </SelectItem>
+            <SelectItem value="ALL">All</SelectItem>
+            <SelectItem value="ACTIVE">Active</SelectItem>
+            <SelectItem value="PENDING">Pending</SelectItem>
+            <SelectItem value="REJECTED">Rejected</SelectItem>
+            <SelectItem value="SUSPENDED">Suspended</SelectItem>
+            <SelectItem value="DEACTIVATED">Deactivated</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -498,14 +504,25 @@ export default function AdminUsersPage() {
               Array.from({ length: 8 }).map((_, i) => (
                 <TableRow key={i}>
                   {/* Name, Email, Phone, Roles, District, LGA, PHC, Status, Joined, Actions */}
-                  {["w-32", "w-44", "w-28", "w-24", "w-24", "w-24", "w-32", "w-16", "w-20", "w-8"].map((w, j) => (
+                  {[
+                    "w-32",
+                    "w-44",
+                    "w-28",
+                    "w-24",
+                    "w-24",
+                    "w-24",
+                    "w-32",
+                    "w-16",
+                    "w-20",
+                    "w-8",
+                  ].map((w, j) => (
                     <TableCell key={j}>
                       <Skeleton className={`h-4 ${w}`} />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : filtered.length === 0 ? (
+            ) : users.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={10}
@@ -515,7 +532,7 @@ export default function AdminUsersPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((user) => {
+              users.map((user) => {
                 const status = STATUS_CONFIG[user.accountStatus] ?? {
                   label: user.accountStatus,
                   className: "",
@@ -619,6 +636,39 @@ export default function AdminUsersPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            Showing {(page - 1) * LIMIT + 1}–{Math.min(page * LIMIT, total)} of{" "}
+            {total} users
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8"
+              disabled={page === 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <span className="tabular-nums">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8"
+              disabled={page === totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Create / Edit Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -756,7 +806,7 @@ export default function AdminUsersPage() {
                   <FormItem>
                     <FormLabel>
                       District{" "}
-                      <span className="text-muted-foreground">(optional)</span>
+                      {/* <span className="text-muted-foreground">(optional)</span> */}
                     </FormLabel>
                     <Select
                       value={field.value ?? ""}
@@ -798,7 +848,7 @@ export default function AdminUsersPage() {
                   <FormItem>
                     <FormLabel>
                       LGA{" "}
-                      <span className="text-muted-foreground">(optional)</span>
+                      {/* <span className="text-muted-foreground">(optional)</span> */}
                     </FormLabel>
                     <Select
                       value={field.value ?? ""}
@@ -845,7 +895,7 @@ export default function AdminUsersPage() {
                   <FormItem>
                     <FormLabel>
                       PHC{" "}
-                      <span className="text-muted-foreground">(optional)</span>
+                      {/* <span className="text-muted-foreground">(optional)</span> */}
                     </FormLabel>
                     <Select
                       value={field.value ?? ""}
