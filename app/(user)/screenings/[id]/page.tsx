@@ -5,7 +5,7 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { CheckCircle2 } from "lucide-react"
 
 import { PageHeader } from "@/components/PageHeader"
@@ -54,13 +54,13 @@ const statusVariant: Record<string, any> = {
   REFERRED: "destructive",
 }
 
-const CAN_RECORD_VITALS = ["ADMIN", "NURSE", "MIDWIFE", "WARD_NURSE", "DENTAL_NURSE", "EMERGENCY_CARE_STAFF", "EMERGENCY_MEDICAL_TECHNICIAN", "MEDICAL_OFFICER", "CONSULTANT", "OBSTETRICIAN", "OPHTHALMOLOGIST", "OPTOMETRIST", "DENTIST", "COMMUNITY_HEALTH_EXTENSION_WORKER"]
-const CAN_COMPLETE = ["ADMIN", "MEDICAL_OFFICER", "CONSULTANT", "OBSTETRICIAN", "OPHTHALMOLOGIST", "OPTOMETRIST", "DENTIST"]
-const CAN_SCREEN_HTN = ["ADMIN", "COMMUNITY_HEALTH_EXTENSION_WORKER"]
-const CAN_SCREEN_DM = ["ADMIN", "MEDICAL_LABORATORY_SCIENTIST", "MEDICAL_LABORATORY_TECHNICIAN"]
-const CAN_SCREEN_CERVICAL = ["ADMIN", "NURSE", "MIDWIFE", "WARD_NURSE", "DENTAL_NURSE", "EMERGENCY_CARE_STAFF", "EMERGENCY_MEDICAL_TECHNICIAN"]
-const CAN_SCREEN_BREAST = ["ADMIN", "MEDICAL_OFFICER", "CONSULTANT", "OBSTETRICIAN", "OPHTHALMOLOGIST", "OPTOMETRIST", "DENTIST"]
-const CAN_SCREEN_PSA = ["ADMIN", "MEDICAL_LABORATORY_SCIENTIST", "MEDICAL_LABORATORY_TECHNICIAN"]
+const CAN_RECORD_VITALS = ["ADMIN","NURSE","MIDWIFE","WARD_NURSE","DENTAL_NURSE","EMERGENCY_CARE_STAFF","EMERGENCY_MEDICAL_TECHNICIAN","MEDICAL_OFFICER","CONSULTANT","OBSTETRICIAN","OPHTHALMOLOGIST","OPTOMETRIST","DENTIST","COMMUNITY_HEALTH_EXTENSION_WORKER"]
+const CAN_COMPLETE = ["ADMIN","MEDICAL_OFFICER","CONSULTANT","OBSTETRICIAN","OPHTHALMOLOGIST","OPTOMETRIST","DENTIST"]
+const CAN_SCREEN_HTN = ["ADMIN","COMMUNITY_HEALTH_EXTENSION_WORKER"]
+const CAN_SCREEN_DM = ["ADMIN","MEDICAL_LABORATORY_SCIENTIST","MEDICAL_LABORATORY_TECHNICIAN"]
+const CAN_SCREEN_CERVICAL = ["ADMIN","NURSE","MIDWIFE","WARD_NURSE","DENTAL_NURSE","EMERGENCY_CARE_STAFF","EMERGENCY_MEDICAL_TECHNICIAN"]
+const CAN_SCREEN_BREAST = ["ADMIN","MEDICAL_OFFICER","CONSULTANT","OBSTETRICIAN","OPHTHALMOLOGIST","OPTOMETRIST","DENTIST"]
+const CAN_SCREEN_PSA = ["ADMIN","MEDICAL_LABORATORY_SCIENTIST","MEDICAL_LABORATORY_TECHNICIAN"]
 
 export default function ScreeningDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -77,14 +77,18 @@ export default function ScreeningDetailPage() {
     api.get(`/screenings/${id}`).then((res) => setScreening(res.data)).catch(() => toast.error("Failed to reload"))
 
   useEffect(() => {
-    api
-      .get(`/screenings/${id}`)
+    api.get(`/screenings/${id}`)
       .then((res) => setScreening(res.data))
       .catch(() => toast.error("Failed to load screening"))
       .finally(() => setLoading(false))
   }, [id])
 
-  if (loading) return <div className="space-y-4"><Skeleton className="h-10 w-64" /><Skeleton className="h-64 w-full" /></div>
+  if (loading) return (
+    <div className="space-y-4">
+      <Skeleton className="h-10 w-64" />
+      <Skeleton className="h-64 w-full" />
+    </div>
+  )
   if (!screening) return null
 
   const isDone = screening.status === "COMPLETED" || screening.status === "REFERRED"
@@ -104,16 +108,22 @@ export default function ScreeningDetailPage() {
             <Link href={`/patients/${screening.patient.id}`} className="font-semibold hover:underline">
               {screening.patient.firstName} {screening.patient.lastName}
             </Link>
-            <p className="text-xs text-muted-foreground">{screening.patient.patientNumber} &bull; {screening.patient.age} yrs &bull; {screening.patient.gender}</p>
+            <p className="text-xs text-muted-foreground">
+              {screening.patient.patientNumber} &bull; {screening.patient.age} yrs &bull; {screening.patient.gender}
+            </p>
           </div>
           <Badge variant={statusVariant[screening.status]}>{screening.status.replace(/_/g, " ")}</Badge>
         </div>
         <Separator />
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-          <Info label="Date" value={format(new Date(screening.createdAt), "dd MMM yyyy")} />
-          <Info label="Conducted By" value={`${screening.conductedBy.firstName} ${screening.conductedBy.lastName}`} />
-          {screening.assessedBy && <Info label="Assessed By" value={`${screening.assessedBy.firstName} ${screening.assessedBy.lastName}`} />}
-          {screening.completedAt && <Info label="Completed" value={format(new Date(screening.completedAt), "dd MMM yyyy")} />}
+          <InfoField label="Date" value={format(new Date(screening.createdAt), "dd MMM yyyy")} />
+          <InfoField label="Conducted By" value={`${screening.conductedBy.firstName} ${screening.conductedBy.lastName}`} />
+          {screening.assessedBy && (
+            <InfoField label="Assessed By" value={`${screening.assessedBy.firstName} ${screening.assessedBy.lastName}`} />
+          )}
+          {screening.completedAt && (
+            <InfoField label="Completed" value={format(new Date(screening.completedAt), "dd MMM yyyy")} />
+          )}
         </div>
       </div>
 
@@ -135,9 +145,9 @@ export default function ScreeningDetailPage() {
         />
       )}
 
-      {/* Pathway form */}
+      {/* Pathway form — only shown when screening is still active */}
       {!isDone && (
-        <PathwayForm
+        <PathwaySection
           screening={screening}
           userRoles={userRoles}
           saving={saving}
@@ -149,7 +159,6 @@ export default function ScreeningDetailPage() {
       {/* Doctor assessment */}
       {canComplete && !isDone && (
         <DoctorForm
-          screening={screening}
           saving={saving === "complete"}
           onComplete={async (data) => {
             setSaving("complete")
@@ -171,88 +180,97 @@ export default function ScreeningDetailPage() {
             <CheckCircle2 className="h-4 w-4 text-green-500" />
             Doctor Assessment
           </div>
-          {screening.doctorNotes && <p className="text-sm"><span className="text-muted-foreground">Notes: </span>{screening.doctorNotes}</p>}
-          {screening.referralNote && <p className="text-sm"><span className="text-muted-foreground">Referral: </span>{screening.referralNote}</p>}
+          {screening.doctorNotes && (
+            <p className="text-sm"><span className="text-muted-foreground">Notes: </span>{screening.doctorNotes}</p>
+          )}
+          {screening.referralNote && (
+            <p className="text-sm"><span className="text-muted-foreground">Referral: </span>{screening.referralNote}</p>
+          )}
         </div>
       )}
     </div>
   )
 }
 
+// ─── Vitals ───────────────────────────────────────────────────────────────────
+
 function VitalsForm({ screening, saving, onSave }: { screening: Screening; saving: boolean; onSave: (d: any) => void }) {
-  const existing = screening.vitals
-  const { register, handleSubmit } = useForm({ defaultValues: existing ?? {} })
+  const { register, handleSubmit } = useForm({ defaultValues: screening.vitals ?? {} })
   return (
     <div className="rounded-lg border p-5 space-y-4">
       <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Vitals</h2>
       <form onSubmit={handleSubmit(onSave)} className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <Field label="BP Systolic (mmHg)" name="bloodPressureSystolic" register={register} type="number" />
-        <Field label="BP Diastolic (mmHg)" name="bloodPressureDiastolic" register={register} type="number" />
-        <Field label="Heart Rate (bpm)" name="heartRate" register={register} type="number" />
-        <Field label="Weight (kg)" name="weight" register={register} type="number" step="0.1" />
-        <Field label="Height (cm)" name="height" register={register} type="number" step="0.1" />
-        <Field label="Temperature (°C)" name="temperature" register={register} type="number" step="0.1" />
-        <Field label="SpO₂ (%)" name="oxygenSaturation" register={register} type="number" />
+        <TextField label="BP Systolic (mmHg)" name="bloodPressureSystolic" register={register} type="number" />
+        <TextField label="BP Diastolic (mmHg)" name="bloodPressureDiastolic" register={register} type="number" />
+        <TextField label="Heart Rate (bpm)" name="heartRate" register={register} type="number" />
+        <TextField label="Weight (kg)" name="weight" register={register} type="number" step="0.1" />
+        <TextField label="Height (cm)" name="height" register={register} type="number" step="0.1" />
+        <TextField label="Temperature (°C)" name="temperature" register={register} type="number" step="0.1" />
+        <TextField label="SpO₂ (%)" name="oxygenSaturation" register={register} type="number" />
         <div className="col-span-2 sm:col-span-3 space-y-1.5">
           <Label>Notes</Label>
           <Textarea {...register("notes")} rows={2} />
         </div>
         <div className="col-span-2 sm:col-span-3">
-          <Button type="submit" disabled={saving}>{saving ? "Saving…" : existing ? "Update Vitals" : "Record Vitals"}</Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? "Saving…" : screening.vitals ? "Update Vitals" : "Record Vitals"}
+          </Button>
         </div>
       </form>
     </div>
   )
 }
 
-function PathwayForm({ screening, userRoles, saving, setSaving, onSaved }: any) {
-  const type = screening.screeningType
-  const existing = screening.hypertension ?? screening.diabetes ?? screening.cervical ?? screening.breast ?? screening.psa
+// ─── Pathway routing ──────────────────────────────────────────────────────────
 
-  if (type === "HYPERTENSION" && userRoles.some((r: string) => CAN_SCREEN_HTN.includes(r))) {
+function PathwaySection({ screening, userRoles, saving, setSaving, onSaved }: any) {
+  const { screeningType } = screening
+
+  if (screeningType === "HYPERTENSION" && userRoles.some((r: string) => CAN_SCREEN_HTN.includes(r)))
     return <HypertensionForm existing={screening.hypertension} screeningId={screening.id} saving={saving === "pathway"} setSaving={setSaving} onSaved={onSaved} />
-  }
-  if (type === "DIABETES" && userRoles.some((r: string) => CAN_SCREEN_DM.includes(r))) {
+
+  if (screeningType === "DIABETES" && userRoles.some((r: string) => CAN_SCREEN_DM.includes(r)))
     return <DiabetesForm existing={screening.diabetes} screeningId={screening.id} saving={saving === "pathway"} setSaving={setSaving} onSaved={onSaved} />
-  }
-  if (type === "CERVICAL_CANCER" && userRoles.some((r: string) => CAN_SCREEN_CERVICAL.includes(r))) {
+
+  if (screeningType === "CERVICAL_CANCER" && userRoles.some((r: string) => CAN_SCREEN_CERVICAL.includes(r)))
     return <CervicalForm existing={screening.cervical} screeningId={screening.id} saving={saving === "pathway"} setSaving={setSaving} onSaved={onSaved} />
-  }
-  if (type === "BREAST_CANCER" && userRoles.some((r: string) => CAN_SCREEN_BREAST.includes(r))) {
+
+  if (screeningType === "BREAST_CANCER" && userRoles.some((r: string) => CAN_SCREEN_BREAST.includes(r)))
     return <BreastForm existing={screening.breast} screeningId={screening.id} saving={saving === "pathway"} setSaving={setSaving} onSaved={onSaved} />
-  }
-  if (type === "PSA" && userRoles.some((r: string) => CAN_SCREEN_PSA.includes(r))) {
+
+  if (screeningType === "PSA" && userRoles.some((r: string) => CAN_SCREEN_PSA.includes(r)))
     return <PsaForm existing={screening.psa} screeningId={screening.id} saving={saving === "pathway"} setSaving={setSaving} onSaved={onSaved} />
-  }
+
   return null
 }
 
+// ─── Pathway forms ────────────────────────────────────────────────────────────
+
 function HypertensionForm({ existing, screeningId, saving, setSaving, onSaved }: any) {
-  const { register, handleSubmit } = useForm({ defaultValues: existing ?? {} })
+  const { register, handleSubmit, control } = useForm({
+    defaultValues: { familyHistory: false, smokingStatus: false, alcoholUse: false, previousDiagnosis: false, onMedication: false, physicalActivity: "", saltIntake: "", medicationDetails: "", result: "", ...existing },
+  })
   const submit = async (data: any) => {
     setSaving("pathway")
-    try {
-      await api.post(`/screenings/${screeningId}/hypertension`, data)
-      toast.success("Hypertension data saved")
-      onSaved()
-    } catch (err: any) { toast.error(err?.response?.data?.message ?? "Failed") }
+    try { await api.post(`/screenings/${screeningId}/hypertension`, data); toast.success("Saved"); onSaved() }
+    catch (err: any) { toast.error(err?.response?.data?.message ?? "Failed") }
     finally { setSaving(null) }
   }
   return (
     <div className="rounded-lg border p-5 space-y-4">
       <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Hypertension Screening</h2>
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <BoolField label="Family History" name="familyHistory" register={register} />
-          <BoolField label="Smoking" name="smokingStatus" register={register} />
-          <BoolField label="Alcohol Use" name="alcoholUse" register={register} />
-          <BoolField label="Previous Diagnosis" name="previousDiagnosis" register={register} />
-          <BoolField label="On Medication" name="onMedication" register={register} />
+        <div className="grid grid-cols-2 gap-3">
+          <BoolField control={control} name="familyHistory" label="Family History" />
+          <BoolField control={control} name="smokingStatus" label="Smoking" />
+          <BoolField control={control} name="alcoholUse" label="Alcohol Use" />
+          <BoolField control={control} name="previousDiagnosis" label="Previous Diagnosis" />
+          <BoolField control={control} name="onMedication" label="On Medication" />
         </div>
-        <Field label="Physical Activity" name="physicalActivity" register={register} />
-        <Field label="Salt Intake" name="saltIntake" register={register} />
-        <Field label="Medication Details" name="medicationDetails" register={register} />
-        <Field label="Result" name="result" register={register} />
+        <TextField label="Physical Activity" name="physicalActivity" register={register} />
+        <TextField label="Salt Intake" name="saltIntake" register={register} />
+        <TextField label="Medication Details" name="medicationDetails" register={register} />
+        <TextField label="Result" name="result" register={register} />
         <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
       </form>
     </div>
@@ -260,13 +278,13 @@ function HypertensionForm({ existing, screeningId, saving, setSaving, onSaved }:
 }
 
 function DiabetesForm({ existing, screeningId, saving, setSaving, onSaved }: any) {
-  const { register, handleSubmit } = useForm({ defaultValues: existing ?? {} })
+  const { register, handleSubmit, control } = useForm({
+    defaultValues: { fastingBloodSugar: "", randomBloodSugar: "", hba1c: "", familyHistory: false, previousDiagnosis: false, onMedication: false, medicationDetails: "", result: "", ...existing },
+  })
   const submit = async (data: any) => {
     setSaving("pathway")
-    try {
-      await api.post(`/screenings/${screeningId}/diabetes`, data)
-      toast.success("Diabetes data saved"); onSaved()
-    } catch (err: any) { toast.error(err?.response?.data?.message ?? "Failed") }
+    try { await api.post(`/screenings/${screeningId}/diabetes`, data); toast.success("Saved"); onSaved() }
+    catch (err: any) { toast.error(err?.response?.data?.message ?? "Failed") }
     finally { setSaving(null) }
   }
   return (
@@ -274,15 +292,17 @@ function DiabetesForm({ existing, screeningId, saving, setSaving, onSaved }: any
       <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Diabetes Screening</h2>
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Fasting Blood Sugar (mmol/L)" name="fastingBloodSugar" register={register} type="number" step="0.1" />
-          <Field label="Random Blood Sugar (mmol/L)" name="randomBloodSugar" register={register} type="number" step="0.1" />
-          <Field label="HbA1c (%)" name="hba1c" register={register} type="number" step="0.1" />
-          <BoolField label="Family History" name="familyHistory" register={register} />
-          <BoolField label="Previous Diagnosis" name="previousDiagnosis" register={register} />
-          <BoolField label="On Medication" name="onMedication" register={register} />
+          <TextField label="Fasting Blood Sugar (mmol/L)" name="fastingBloodSugar" register={register} type="number" step="0.1" />
+          <TextField label="Random Blood Sugar (mmol/L)" name="randomBloodSugar" register={register} type="number" step="0.1" />
+          <TextField label="HbA1c (%)" name="hba1c" register={register} type="number" step="0.1" />
         </div>
-        <Field label="Medication Details" name="medicationDetails" register={register} />
-        <Field label="Result" name="result" register={register} />
+        <div className="grid grid-cols-2 gap-3">
+          <BoolField control={control} name="familyHistory" label="Family History" />
+          <BoolField control={control} name="previousDiagnosis" label="Previous Diagnosis" />
+          <BoolField control={control} name="onMedication" label="On Medication" />
+        </div>
+        <TextField label="Medication Details" name="medicationDetails" register={register} />
+        <TextField label="Result" name="result" register={register} />
         <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
       </form>
     </div>
@@ -290,13 +310,13 @@ function DiabetesForm({ existing, screeningId, saving, setSaving, onSaved }: any
 }
 
 function CervicalForm({ existing, screeningId, saving, setSaving, onSaved }: any) {
-  const { register, handleSubmit } = useForm({ defaultValues: existing ?? {} })
+  const { register, handleSubmit, control } = useForm({
+    defaultValues: { lastPapSmearDate: "", papSmearResult: "", hpvStatus: "", abnormalBleeding: false, viaResult: "", colposcopyDone: false, result: "", ...existing },
+  })
   const submit = async (data: any) => {
     setSaving("pathway")
-    try {
-      await api.post(`/screenings/${screeningId}/cervical`, data)
-      toast.success("Cervical data saved"); onSaved()
-    } catch (err: any) { toast.error(err?.response?.data?.message ?? "Failed") }
+    try { await api.post(`/screenings/${screeningId}/cervical`, data); toast.success("Saved"); onSaved() }
+    catch (err: any) { toast.error(err?.response?.data?.message ?? "Failed") }
     finally { setSaving(null) }
   }
   return (
@@ -304,14 +324,16 @@ function CervicalForm({ existing, screeningId, saving, setSaving, onSaved }: any
       <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Cervical Cancer Screening</h2>
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <Field label="Last Pap Smear Date" name="lastPapSmearDate" register={register} type="date" />
-          <Field label="Pap Smear Result" name="papSmearResult" register={register} />
-          <Field label="HPV Status" name="hpvStatus" register={register} />
-          <Field label="VIA Result" name="viaResult" register={register} />
-          <BoolField label="Abnormal Bleeding" name="abnormalBleeding" register={register} />
-          <BoolField label="Colposcopy Done" name="colposcopyDone" register={register} />
+          <TextField label="Last Pap Smear Date" name="lastPapSmearDate" register={register} type="date" />
+          <TextField label="Pap Smear Result" name="papSmearResult" register={register} />
+          <TextField label="HPV Status" name="hpvStatus" register={register} />
+          <TextField label="VIA Result" name="viaResult" register={register} />
         </div>
-        <Field label="Result" name="result" register={register} />
+        <div className="grid grid-cols-2 gap-3">
+          <BoolField control={control} name="abnormalBleeding" label="Abnormal Bleeding" />
+          <BoolField control={control} name="colposcopyDone" label="Colposcopy Done" />
+        </div>
+        <TextField label="Result" name="result" register={register} />
         <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
       </form>
     </div>
@@ -319,28 +341,30 @@ function CervicalForm({ existing, screeningId, saving, setSaving, onSaved }: any
 }
 
 function BreastForm({ existing, screeningId, saving, setSaving, onSaved }: any) {
-  const { register, handleSubmit } = useForm({ defaultValues: existing ?? {} })
+  const { register, handleSubmit, control } = useForm({
+    defaultValues: { selfExamination: false, clinicalExamResult: "", mammogramDone: false, mammogramResult: "", familyHistory: false, lumpDetected: false, result: "", ...existing },
+  })
   const submit = async (data: any) => {
     setSaving("pathway")
-    try {
-      await api.post(`/screenings/${screeningId}/breast`, data)
-      toast.success("Breast data saved"); onSaved()
-    } catch (err: any) { toast.error(err?.response?.data?.message ?? "Failed") }
+    try { await api.post(`/screenings/${screeningId}/breast`, data); toast.success("Saved"); onSaved() }
+    catch (err: any) { toast.error(err?.response?.data?.message ?? "Failed") }
     finally { setSaving(null) }
   }
   return (
     <div className="rounded-lg border p-5 space-y-4">
       <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">Breast Cancer Screening</h2>
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <BoolField label="Self Examination" name="selfExamination" register={register} />
-          <Field label="Clinical Exam Result" name="clinicalExamResult" register={register} />
-          <BoolField label="Mammogram Done" name="mammogramDone" register={register} />
-          <Field label="Mammogram Result" name="mammogramResult" register={register} />
-          <BoolField label="Family History" name="familyHistory" register={register} />
-          <BoolField label="Lump Detected" name="lumpDetected" register={register} />
+        <div className="grid grid-cols-2 gap-3">
+          <BoolField control={control} name="selfExamination" label="Self Examination" />
+          <BoolField control={control} name="mammogramDone" label="Mammogram Done" />
+          <BoolField control={control} name="familyHistory" label="Family History" />
+          <BoolField control={control} name="lumpDetected" label="Lump Detected" />
         </div>
-        <Field label="Result" name="result" register={register} />
+        <div className="grid grid-cols-2 gap-4">
+          <TextField label="Clinical Exam Result" name="clinicalExamResult" register={register} />
+          <TextField label="Mammogram Result" name="mammogramResult" register={register} />
+        </div>
+        <TextField label="Result" name="result" register={register} />
         <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
       </form>
     </div>
@@ -348,34 +372,36 @@ function BreastForm({ existing, screeningId, saving, setSaving, onSaved }: any) 
 }
 
 function PsaForm({ existing, screeningId, saving, setSaving, onSaved }: any) {
-  const { register, handleSubmit } = useForm({ defaultValues: existing ?? {} })
+  const { register, handleSubmit, control } = useForm({
+    defaultValues: { psaLevel: "", digitalRectalExam: false, dreResult: "", familyHistory: false, urinarySymptoms: false, result: "", ...existing },
+  })
   const submit = async (data: any) => {
     setSaving("pathway")
-    try {
-      await api.post(`/screenings/${screeningId}/psa`, data)
-      toast.success("PSA data saved"); onSaved()
-    } catch (err: any) { toast.error(err?.response?.data?.message ?? "Failed") }
+    try { await api.post(`/screenings/${screeningId}/psa`, data); toast.success("Saved"); onSaved() }
+    catch (err: any) { toast.error(err?.response?.data?.message ?? "Failed") }
     finally { setSaving(null) }
   }
   return (
     <div className="rounded-lg border p-5 space-y-4">
       <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">PSA Screening</h2>
       <form onSubmit={handleSubmit(submit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="PSA Level (ng/mL)" name="psaLevel" register={register} type="number" step="0.01" />
-          <BoolField label="Digital Rectal Exam" name="digitalRectalExam" register={register} />
-          <Field label="DRE Result" name="dreResult" register={register} />
-          <BoolField label="Family History" name="familyHistory" register={register} />
-          <BoolField label="Urinary Symptoms" name="urinarySymptoms" register={register} />
+        <TextField label="PSA Level (ng/mL)" name="psaLevel" register={register} type="number" step="0.01" />
+        <div className="grid grid-cols-2 gap-3">
+          <BoolField control={control} name="digitalRectalExam" label="Digital Rectal Exam" />
+          <BoolField control={control} name="familyHistory" label="Family History" />
+          <BoolField control={control} name="urinarySymptoms" label="Urinary Symptoms" />
         </div>
-        <Field label="Result" name="result" register={register} />
+        <TextField label="DRE Result" name="dreResult" register={register} />
+        <TextField label="Result" name="result" register={register} />
         <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
       </form>
     </div>
   )
 }
 
-function DoctorForm({ screening, saving, onComplete }: { screening: Screening; saving: boolean; onComplete: (d: any) => void }) {
+// ─── Doctor assessment ────────────────────────────────────────────────────────
+
+function DoctorForm({ saving, onComplete }: { saving: boolean; onComplete: (d: any) => void }) {
   const { register, handleSubmit, setValue, watch } = useForm({
     defaultValues: { status: "COMPLETED", doctorNotes: "", referralNote: "" },
   })
@@ -410,7 +436,9 @@ function DoctorForm({ screening, saving, onComplete }: { screening: Screening; s
   )
 }
 
-function Field({ label, name, register, type = "text", step }: any) {
+// ─── Shared field components ──────────────────────────────────────────────────
+
+function TextField({ label, name, register, type = "text", step }: any) {
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>
@@ -419,16 +447,26 @@ function Field({ label, name, register, type = "text", step }: any) {
   )
 }
 
-function BoolField({ label, name, register }: any) {
+function BoolField({ label, name, control }: { label: string; name: string; control: any }) {
   return (
-    <div className="flex items-center gap-2 pt-2">
-      <Checkbox {...register(name)} id={name} />
-      <Label htmlFor={name}>{label}</Label>
-    </div>
+    <Controller
+      name={name}
+      control={control}
+      render={({ field }) => (
+        <div className="flex items-center gap-2 pt-2">
+          <Checkbox
+            id={name}
+            checked={!!field.value}
+            onCheckedChange={(checked) => field.onChange(!!checked)}
+          />
+          <Label htmlFor={name}>{label}</Label>
+        </div>
+      )}
+    />
   )
 }
 
-function Info({ label, value }: { label: string; value: string }) {
+function InfoField({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>

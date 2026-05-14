@@ -22,6 +22,7 @@ import {
   IconUserSearch,
   IconReportMedical,
   IconUserCheck,
+  IconMessage,
 } from "@tabler/icons-react"
 
 // ── Tenant / CLIENT nav ────────────────────────────────────────────────────────
@@ -230,6 +231,8 @@ export const adminNavLinks = [
     slug: "/admin/roles",
     icon: IconUsersGroup,
   },
+  // Clinical
+  { label: "SMS Logs", slug: "/admin/sms", icon: IconMessage },
   // Clinical
   { label: "Patients", slug: "/patients", icon: IconUserSearch },
   { label: "Screenings", slug: "/screenings", icon: IconStethoscope },

@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
@@ -184,6 +186,58 @@ export default function AppointmentsPage() {
   )
 }
 
+function PatientSearch({ onSelect }: { onSelect: (id: string, label: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const [results, setResults] = useState<{ id: string; firstName: string; lastName: string; patientNumber: string }[]>([])
+  const [selected, setSelected] = useState("")
+
+  useEffect(() => {
+    if (!query || query.length < 2) { setResults([]); return }
+    const t = setTimeout(async () => {
+      try {
+        const res = await api.get("/patients", { params: { search: query, limit: 10 } })
+        setResults(res.data.data)
+      } catch { /* silent */ }
+    }, 300)
+    return () => clearTimeout(t)
+  }, [query])
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" className="w-full justify-start font-normal text-left">
+          {selected || <span className="text-muted-foreground">Search patient by name or number…</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="p-0 w-[320px]" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput placeholder="Type name or patient number…" value={query} onValueChange={setQuery} />
+          <CommandList>
+            {results.length === 0 && query.length >= 2 && <CommandEmpty>No patients found.</CommandEmpty>}
+            <CommandGroup>
+              {results.map((p) => (
+                <CommandItem
+                  key={p.id}
+                  onSelect={() => {
+                    const label = `${p.firstName} ${p.lastName} (${p.patientNumber})`
+                    setSelected(label)
+                    onSelect(p.id, label)
+                    setOpen(false)
+                  }}
+                >
+                  <span className="font-medium">{p.firstName} {p.lastName}</span>
+                  <span className="ml-2 text-xs text-muted-foreground">{p.patientNumber}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 function AppointmentSheet({ open, appointment, onClose, onSaved }: {
   open: boolean
   appointment?: Appointment
@@ -202,6 +256,10 @@ function AppointmentSheet({ open, appointment, onClose, onSaved }: {
   const status = watch("status")
 
   const onSubmit = async (data: any) => {
+    if (!appointment && !data.patientId) {
+      toast.error("Please select a patient")
+      return
+    }
     setSaving(true)
     try {
       if (appointment) {
@@ -228,8 +286,8 @@ function AppointmentSheet({ open, appointment, onClose, onSaved }: {
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
           {!appointment && (
             <div className="space-y-1.5">
-              <Label>Patient ID *</Label>
-              <Input {...register("patientId")} placeholder="Patient ID" required />
+              <Label>Patient *</Label>
+              <PatientSearch onSelect={(id) => setValue("patientId", id)} />
             </div>
           )}
           {appointment && (
