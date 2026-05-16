@@ -65,9 +65,9 @@ export default function RegisterPatientPage() {
     <div className="space-y-6">
       <PageHeader title="Register Patient" back />
 
-      <form onSubmit={handleSubmit(onSubmit)} className="max-w-2xl space-y-6">
-        <div className="rounded-lg border p-6 space-y-4">
-          <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-4 rounded-lg border p-6">
+          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
             Personal Information
           </h2>
 
@@ -75,24 +75,45 @@ export default function RegisterPatientPage() {
             <div className="space-y-1.5">
               <Label>First Name *</Label>
               <Input {...register("firstName")} placeholder="e.g. Amina" />
-              {errors.firstName && <p className="text-xs text-destructive">{errors.firstName.message}</p>}
+              {errors.firstName && (
+                <p className="text-xs text-destructive">
+                  {errors.firstName.message}
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Last Name *</Label>
               <Input {...register("lastName")} placeholder="e.g. Bello" />
-              {errors.lastName && <p className="text-xs text-destructive">{errors.lastName.message}</p>}
+              {errors.lastName && (
+                <p className="text-xs text-destructive">
+                  {errors.lastName.message}
+                </p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Age *</Label>
-              <Input {...register("age")} type="number" min={0} max={150} placeholder="e.g. 35" />
-              {errors.age && <p className="text-xs text-destructive">{errors.age.message}</p>}
+              <Input
+                {...register("age")}
+                type="number"
+                min={0}
+                max={150}
+                placeholder="e.g. 35"
+              />
+              {errors.age && (
+                <p className="text-xs text-destructive">{errors.age.message}</p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Gender *</Label>
-              <Select onValueChange={(v) => setValue("gender", v as "MALE" | "FEMALE")} value={gender}>
+              <Select
+                onValueChange={(v) =>
+                  setValue("gender", v as "MALE" | "FEMALE")
+                }
+                value={gender}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
@@ -101,23 +122,34 @@ export default function RegisterPatientPage() {
                   <SelectItem value="FEMALE">Female</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.gender && <p className="text-xs text-destructive">{errors.gender.message}</p>}
+              {errors.gender && (
+                <p className="text-xs text-destructive">
+                  {errors.gender.message}
+                </p>
+              )}
             </div>
           </div>
 
           <div className="space-y-1.5">
             <Label>Phone Number</Label>
-            <Input {...register("phoneNumber")} placeholder="e.g. 08012345678" />
+            <Input
+              {...register("phoneNumber")}
+              placeholder="e.g. 08012345678"
+            />
           </div>
 
           <div className="space-y-1.5">
             <Label>Address</Label>
-            <Textarea {...register("address")} placeholder="Patient's home address" rows={2} />
+            <Textarea
+              {...register("address")}
+              placeholder="Patient's home address"
+              rows={2}
+            />
           </div>
         </div>
 
-        <div className="rounded-lg border p-6 space-y-4">
-          <h2 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+        <div className="space-y-4 rounded-lg border p-6">
+          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
             Next of Kin
           </h2>
           <div className="grid grid-cols-2 gap-4">
@@ -127,7 +159,10 @@ export default function RegisterPatientPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Next of Kin Phone</Label>
-              <Input {...register("nextOfKinPhone")} placeholder="Phone number" />
+              <Input
+                {...register("nextOfKinPhone")}
+                placeholder="Phone number"
+              />
             </div>
           </div>
         </div>

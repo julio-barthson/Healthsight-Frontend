@@ -1,7 +1,5 @@
 import {
   adminNavLinks,
-  clientNavLinks,
-  landlordNavLinks,
   doctorNavLinks,
   nurseNavLinks,
   mlsNavLinks,
@@ -11,8 +9,6 @@ import {
 
 export const roleNavMap: Record<string, any[]> = {
   // Non-Healthsight roles
-  CLIENT: clientNavLinks,
-  LANDLORD: landlordNavLinks,
   ADMIN: adminNavLinks,
 
   // Doctor group
@@ -22,6 +18,7 @@ export const roleNavMap: Record<string, any[]> = {
   OPHTHALMOLOGIST: doctorNavLinks,
   OPTOMETRIST: doctorNavLinks,
   DENTIST: doctorNavLinks,
+  DOCTOR: doctorNavLinks,
 
   // Nurse group
   NURSE: nurseNavLinks,
@@ -38,6 +35,7 @@ export const roleNavMap: Record<string, any[]> = {
   // HIM group
   HEALTH_INFORMATION_MANAGEMENT_OFFICER: himNavLinks,
   HEALTH_INFORMATION_MANAGEMENT_TECHNICIAN: himNavLinks,
+  HIM_OFFICER: himNavLinks,
 
   // CHO group
   COMMUNITY_HEALTH_EXTENSION_WORKER: choNavLinks,

@@ -1,9 +1,9 @@
 import { User } from "@/store/useAuth"
-import { adminNavLinks, clientNavLinks, healthStaffNavLinks } from "@/constants/nav-links"
+import { adminNavLinks, healthStaffNavLinks } from "@/constants/nav-links"
 import { roleNavMap } from "@/constants/roleNavMap"
 
 export function getNavByRole(user?: User | null) {
-  if (!user) return clientNavLinks
+  if (!user) return healthStaffNavLinks
 
   const role = user.role ?? user.roles?.[0]?.name
   const position = user.adminPosition

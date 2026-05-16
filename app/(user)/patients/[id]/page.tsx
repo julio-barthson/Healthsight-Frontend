@@ -5,7 +5,7 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { Plus, Stethoscope, Calendar, Activity } from "lucide-react"
+import { Plus, Stethoscope, Calendar, Activity, MessageSquare } from "lucide-react"
 
 import { PageHeader } from "@/components/PageHeader"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -71,13 +72,20 @@ type Patient = {
   }[]
 }
 
-const SCREENING_TYPES = [
+const ALL_SCREENING_TYPES = [
   "HYPERTENSION",
   "DIABETES",
   "CERVICAL_CANCER",
   "BREAST_CANCER",
   "PSA",
 ]
+
+const FEMALE_ONLY_TYPES = ["CERVICAL_CANCER", "BREAST_CANCER"]
+
+function getAvailableScreeningTypes(gender: "MALE" | "FEMALE") {
+  if (gender === "MALE") return ALL_SCREENING_TYPES.filter((t) => !FEMALE_ONLY_TYPES.includes(t))
+  return ALL_SCREENING_TYPES
+}
 
 const statusColor: Record<string, string> = {
   PENDING: "secondary",
@@ -100,6 +108,9 @@ export default function PatientDetailPage() {
   const [showScreeningDialog, setShowScreeningDialog] = useState(false)
   const [screeningType, setScreeningType] = useState("")
   const [creating, setCreating] = useState(false)
+  const [showSmsDialog, setShowSmsDialog] = useState(false)
+  const [smsMessage, setSmsMessage] = useState("")
+  const [sendingSms, setSendingSms] = useState(false)
 
   useEffect(() => {
     api
@@ -121,6 +132,21 @@ export default function PatientDetailPage() {
       toast.error(err?.response?.data?.message ?? "Failed to create screening")
     } finally {
       setCreating(false)
+    }
+  }
+
+  const sendSms = async () => {
+    if (!smsMessage.trim()) return
+    setSendingSms(true)
+    try {
+      await api.post(`/patients/${id}/sms`, { message: smsMessage.trim() })
+      toast.success("SMS sent to patient")
+      setShowSmsDialog(false)
+      setSmsMessage("")
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Failed to send SMS")
+    } finally {
+      setSendingSms(false)
     }
   }
 
@@ -146,10 +172,18 @@ export default function PatientDetailPage() {
         description={patient.patientNumber}
         back
         action={
-          <Button onClick={() => setShowScreeningDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            New Screening
-          </Button>
+          <div className="flex gap-2">
+            {patient.phoneNumber && (
+              <Button variant="outline" onClick={() => setShowSmsDialog(true)}>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Send SMS
+              </Button>
+            )}
+            <Button onClick={() => setShowScreeningDialog(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Screening
+            </Button>
+          </div>
         }
       />
 
@@ -244,8 +278,37 @@ export default function PatientDetailPage() {
         )}
       </div>
 
+      {/* Send SMS Dialog */}
+      <Dialog open={showSmsDialog} onOpenChange={(open) => { setShowSmsDialog(open); if (!open) setSmsMessage("") }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send SMS to Patient</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              Sending to: <span className="font-medium text-foreground">{patient.phoneNumber}</span>
+            </p>
+            <Label>Message</Label>
+            <Textarea
+              value={smsMessage}
+              onChange={(e) => setSmsMessage(e.target.value)}
+              placeholder="Type your message here…"
+              rows={4}
+              maxLength={160}
+            />
+            <p className="text-right text-xs text-muted-foreground">{smsMessage.length}/160</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSmsDialog(false)}>Cancel</Button>
+            <Button onClick={sendSms} disabled={!smsMessage.trim() || sendingSms}>
+              {sendingSms ? "Sending…" : "Send SMS"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* New Screening Dialog */}
-      <Dialog open={showScreeningDialog} onOpenChange={setShowScreeningDialog}>
+      <Dialog open={showScreeningDialog} onOpenChange={(open) => { setShowScreeningDialog(open); if (!open) setScreeningType("") }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Start New Screening</DialogTitle>
@@ -257,11 +320,16 @@ export default function PatientDetailPage() {
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                {SCREENING_TYPES.map((t) => (
+                {getAvailableScreeningTypes(patient.gender).map((t) => (
                   <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {patient.gender === "MALE" && (
+              <p className="text-xs text-muted-foreground">
+                Cervical Cancer and Breast Cancer screenings are not available for male patients.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowScreeningDialog(false)}>Cancel</Button>

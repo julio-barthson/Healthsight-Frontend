@@ -22,7 +22,7 @@ export default function AdminLayout({
   useEffect(() => {
     if (!_hasHydrated) return
     if (!user) {
-      router.replace("/admin/login")
+      router.replace("/")
       return
     }
     if (!user.roles?.some((r) => r.name === "ADMIN")) {
