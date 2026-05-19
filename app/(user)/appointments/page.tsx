@@ -37,7 +37,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useAuth } from "@/store/useAuth"
 import api from "@/lib/api"
+
+const CAN_MANAGE_APPOINTMENTS = [
+  "ADMIN",
+  "HEALTH_INFORMATION_MANAGEMENT_OFFICER",
+  "HEALTH_INFORMATION_MANAGEMENT_TECHNICIAN",
+  "HIM_OFFICER",
+  "MEDICAL_OFFICER",
+  "CONSULTANT",
+  "OBSTETRICIAN",
+  "OPHTHALMOLOGIST",
+  "OPTOMETRIST",
+  "DENTIST",
+  "DOCTOR",
+  "NURSE",
+  "MIDWIFE",
+  "WARD_NURSE",
+  "DENTAL_NURSE",
+  "EMERGENCY_CARE_STAFF",
+  "EMERGENCY_MEDICAL_TECHNICIAN",
+]
 
 type Appointment = {
   id: string
@@ -57,6 +78,7 @@ const statusVariant: Record<string, any> = {
 }
 
 export default function AppointmentsPage() {
+  const { user } = useAuth()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState("")
@@ -65,6 +87,8 @@ export default function AppointmentsPage() {
   const [total, setTotal] = useState(0)
   const [showCreate, setShowCreate] = useState(false)
   const [editing, setEditing] = useState<Appointment | null>(null)
+
+  const canManage = user?.roles?.some((r) => CAN_MANAGE_APPOINTMENTS.includes(r.name))
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -90,10 +114,12 @@ export default function AppointmentsPage() {
         title="Appointments"
         description={`${total} appointment${total !== 1 ? "s" : ""}`}
         action={
-          <Button onClick={() => setShowCreate(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Schedule
-          </Button>
+          canManage ? (
+            <Button onClick={() => setShowCreate(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Schedule
+            </Button>
+          ) : undefined
         }
       />
 
@@ -158,7 +184,9 @@ export default function AppointmentsPage() {
                       {a.notes ?? "—"}
                     </TableCell>
                     <TableCell>
-                      <Button size="sm" variant="ghost" onClick={() => setEditing(a)}>Edit</Button>
+                      {canManage && (
+                        <Button size="sm" variant="ghost" onClick={() => setEditing(a)}>Edit</Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

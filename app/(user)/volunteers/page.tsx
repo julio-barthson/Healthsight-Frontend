@@ -100,16 +100,25 @@ export default function VolunteersPage() {
       />
 
       <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative max-w-sm min-w-[200px] flex-1">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by name, community…"
             className="pl-9"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(1)
+            }}
           />
         </div>
-        <Select value={status} onValueChange={(v) => { setStatus(v === "all" ? "" : v); setPage(1) }}>
+        <Select
+          value={status}
+          onValueChange={(v) => {
+            setStatus(v === "all" ? "" : v)
+            setPage(1)
+          }}
+        >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
@@ -136,49 +145,103 @@ export default function VolunteersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading
-              ? [...Array(6)].map((_, i) => (
-                  <TableRow key={i}>
-                    {[...Array(8)].map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
-                  </TableRow>
-                ))
-              : volunteers.length === 0
-              ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="py-14 text-center text-muted-foreground">No volunteers found.</TableCell>
-                  </TableRow>
-                )
-              : volunteers.map((v) => (
-                  <TableRow key={v.id}>
-                    <TableCell className="font-medium">{v.firstName} {v.lastName}</TableCell>
-                    <TableCell className="text-muted-foreground">{v.phoneNumber ?? "—"}</TableCell>
-                    <TableCell>{v.gender ?? "—"}</TableCell>
-                    <TableCell>{v.community ?? "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant={v.trainingCompleted ? "default" : "secondary"}>
-                        {v.trainingCompleted ? "Done" : "Pending"}
-                      </Badge>
+            {loading ? (
+              [...Array(6)].map((_, i) => (
+                <TableRow key={i}>
+                  {[...Array(8)].map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full" />
                     </TableCell>
-                    <TableCell>
-                      <Badge variant={v.status === "ACTIVE" ? "outline" : "secondary"}>{v.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{format(new Date(v.createdAt), "dd MMM yyyy")}</TableCell>
-                    <TableCell>
-                      <Button size="sm" variant="ghost" onClick={() => setEditing(v)}>Edit</Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                  ))}
+                </TableRow>
+              ))
+            ) : volunteers.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  className="py-14 text-center text-muted-foreground"
+                >
+                  No volunteers found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              volunteers.map((v) => (
+                <TableRow key={v.id}>
+                  <TableCell className="font-medium">
+                    {v.firstName} {v.lastName}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {v.phoneNumber ?? "—"}
+                  </TableCell>
+                  <TableCell>{v.gender ?? "—"}</TableCell>
+                  <TableCell>{v.community ?? "—"}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={v.trainingCompleted ? "default" : "secondary"}
+                    >
+                      {v.trainingCompleted ? "Done" : "Pending"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={v.status === "ACTIVE" ? "outline" : "secondary"}
+                    >
+                      {v.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {format(new Date(v.createdAt), "dd MMM yyyy")}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditing(v)}
+                    >
+                      Edit
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
-      <VolunteerSheet open={showCreate} onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); fetchData() }} />
-      {editing && <VolunteerSheet open volunteer={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); fetchData() }} />}
+      <VolunteerSheet
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onSaved={() => {
+          setShowCreate(false)
+          fetchData()
+        }}
+      />
+      {editing && (
+        <VolunteerSheet
+          open
+          volunteer={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
+            fetchData()
+          }}
+        />
+      )}
     </div>
   )
 }
 
-function VolunteerSheet({ open, volunteer, onClose, onSaved }: { open: boolean; volunteer?: Volunteer; onClose: () => void; onSaved: () => void }) {
+function VolunteerSheet({
+  open,
+  volunteer,
+  onClose,
+  onSaved,
+}: {
+  open: boolean
+  volunteer?: Volunteer
+  onClose: () => void
+  onSaved: () => void
+}) {
   const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: {
       firstName: volunteer?.firstName ?? "",
@@ -191,7 +254,9 @@ function VolunteerSheet({ open, volunteer, onClose, onSaved }: { open: boolean; 
       community: volunteer?.community ?? "",
       status: volunteer?.status ?? "ACTIVE",
       trainingCompleted: volunteer?.trainingCompleted ?? false,
-      trainingDate: volunteer?.trainingDate ? format(new Date(volunteer.trainingDate), "yyyy-MM-dd") : "",
+      trainingDate: volunteer?.trainingDate
+        ? format(new Date(volunteer.trainingDate), "yyyy-MM-dd")
+        : "",
       notes: volunteer?.notes ?? "",
     },
   })
@@ -226,18 +291,37 @@ function VolunteerSheet({ open, volunteer, onClose, onSaved }: { open: boolean; 
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="overflow-y-auto">
-        <SheetHeader><SheetTitle>{volunteer ? "Edit Volunteer" : "Add Volunteer"}</SheetTitle></SheetHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>First Name *</Label><Input {...register("firstName")} required /></div>
-            <div className="space-y-1.5"><Label>Last Name *</Label><Input {...register("lastName")} required /></div>
+        <SheetHeader className="border-b">
+          <SheetTitle>
+            {volunteer ? "Edit Volunteer" : "Add Volunteer"}
+          </SheetTitle>
+        </SheetHeader>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="container mt-6 space-y-4"
+        >
+          <div className="space-y-1.5">
+            <Label>First Name *</Label>
+            <Input {...register("firstName")} required />
           </div>
-          <div className="space-y-1.5"><Label>Phone</Label><Input {...register("phoneNumber")} /></div>
+          <div className="space-y-1.5">
+            <Label>Last Name *</Label>
+            <Input {...register("lastName")} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Phone</Label>
+            <Input {...register("phoneNumber")} />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Gender</Label>
-              <Select value={gender} onValueChange={(v) => setValue("gender", v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+              <Select
+                value={gender}
+                onValueChange={(v) => setValue("gender", v === "none" ? "" : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">—</SelectItem>
                   <SelectItem value="MALE">Male</SelectItem>
@@ -245,16 +329,35 @@ function VolunteerSheet({ open, volunteer, onClose, onSaved }: { open: boolean; 
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5"><Label>Age</Label><Input {...register("age")} type="number" min={0} max={120} /></div>
+            <div className="space-y-1.5">
+              <Label>Age</Label>
+              <Input {...register("age")} type="number" min={0} max={120} />
+            </div>
           </div>
-          <div className="space-y-1.5"><Label>LGA</Label><Input {...register("lga")} /></div>
-          <div className="space-y-1.5"><Label>Ward</Label><Input {...register("ward")} /></div>
-          <div className="space-y-1.5"><Label>Community</Label><Input {...register("community")} /></div>
+          <div className="space-y-1.5">
+            <Label>LGA</Label>
+            <Input {...register("lga")} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Ward</Label>
+            <Input {...register("ward")} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Community</Label>
+            <Input {...register("community")} />
+          </div>
           {volunteer && (
             <div className="space-y-1.5">
               <Label>Status</Label>
-              <Select value={status} onValueChange={(v) => setValue("status", v as "ACTIVE" | "INACTIVE")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={status}
+                onValueChange={(v) =>
+                  setValue("status", v as "ACTIVE" | "INACTIVE")
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ACTIVE">Active</SelectItem>
                   <SelectItem value="INACTIVE">Inactive</SelectItem>
@@ -263,16 +366,35 @@ function VolunteerSheet({ open, volunteer, onClose, onSaved }: { open: boolean; 
             </div>
           )}
           <div className="flex items-center gap-2">
-            <Checkbox id="training" checked={watch("trainingCompleted")} onCheckedChange={(v) => setValue("trainingCompleted", !!v)} />
+            <Checkbox
+              id="training"
+              checked={watch("trainingCompleted")}
+              onCheckedChange={(v) => setValue("trainingCompleted", !!v)}
+            />
             <Label htmlFor="training">Training Completed</Label>
           </div>
           {watch("trainingCompleted") && (
-            <div className="space-y-1.5"><Label>Training Date</Label><Input {...register("trainingDate")} type="date" /></div>
+            <div className="space-y-1.5">
+              <Label>Training Date</Label>
+              <Input {...register("trainingDate")} type="date" />
+            </div>
           )}
-          <div className="space-y-1.5"><Label>Notes</Label><Textarea {...register("notes")} rows={2} /></div>
-          <SheetFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+          <div className="space-y-1.5">
+            <Label>Notes</Label>
+            <Textarea {...register("notes")} rows={2} />
+          </div>
+          <SheetFooter className="px-0 pt-4">
+            <Button
+              className="w-full"
+              type="button"
+              variant="outline"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button className="w-full" type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
           </SheetFooter>
         </form>
       </SheetContent>

@@ -112,12 +112,15 @@ export default function DividersPage() {
       />
 
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search by name, community, ward…"
           className="pl-9"
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
         />
       </div>
 
@@ -136,57 +139,108 @@ export default function DividersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading
-              ? [...Array(6)].map((_, i) => (
-                  <TableRow key={i}>
-                    {[...Array(8)].map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
-                  </TableRow>
-                ))
-              : dividers.length === 0
-              ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="py-14 text-center text-muted-foreground">No dividers found.</TableCell>
-                  </TableRow>
-                )
-              : dividers.map((d) => (
-                  <TableRow key={d.id}>
-                    <TableCell className="font-medium">{d.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{d.phoneNumber ?? "—"}</TableCell>
-                    <TableCell>{d.lga ?? "—"}</TableCell>
-                    <TableCell>{d.ward ?? "—"}</TableCell>
-                    <TableCell>{d.community ?? "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant={d.isActive ? "default" : "secondary"}>{d.isActive ? "Active" : "Inactive"}</Badge>
+            {loading ? (
+              [...Array(6)].map((_, i) => (
+                <TableRow key={i}>
+                  {[...Array(8)].map((_, j) => (
+                    <TableCell key={j}>
+                      <Skeleton className="h-4 w-full" />
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{format(new Date(d.createdAt), "dd MMM yyyy")}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => setEditing(d)}>Edit</Button>
-                        {isAdmin && (
-                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => setDeleting(d)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                  ))}
+                </TableRow>
+              ))
+            ) : dividers.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  className="py-14 text-center text-muted-foreground"
+                >
+                  No dividers found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              dividers.map((d) => (
+                <TableRow key={d.id}>
+                  <TableCell className="font-medium">{d.name}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {d.phoneNumber ?? "—"}
+                  </TableCell>
+                  <TableCell>{d.lga ?? "—"}</TableCell>
+                  <TableCell>{d.ward ?? "—"}</TableCell>
+                  <TableCell>{d.community ?? "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant={d.isActive ? "default" : "secondary"}>
+                      {d.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {format(new Date(d.createdAt), "dd MMM yyyy")}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditing(d)}
+                      >
+                        Edit
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive"
+                          onClick={() => setDeleting(d)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
-      <DividerSheet open={showCreate} onClose={() => setShowCreate(false)} onSaved={() => { setShowCreate(false); fetchData() }} />
-      {editing && <DividerSheet open divider={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); fetchData() }} />}
+      <DividerSheet
+        open={showCreate}
+        onClose={() => setShowCreate(false)}
+        onSaved={() => {
+          setShowCreate(false)
+          fetchData()
+        }}
+      />
+      {editing && (
+        <DividerSheet
+          open
+          divider={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
+            fetchData()
+          }}
+        />
+      )}
 
       <AlertDialog open={!!deleting} onOpenChange={() => setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Divider?</AlertDialogTitle>
-            <AlertDialogDescription>This will permanently delete <strong>{deleting?.name}</strong>. This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogDescription>
+              This will permanently delete <strong>{deleting?.name}</strong>.
+              This action cannot be undone.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -194,7 +248,17 @@ export default function DividersPage() {
   )
 }
 
-function DividerSheet({ open, divider, onClose, onSaved }: { open: boolean; divider?: Divider; onClose: () => void; onSaved: () => void }) {
+function DividerSheet({
+  open,
+  divider,
+  onClose,
+  onSaved,
+}: {
+  open: boolean
+  divider?: Divider
+  onClose: () => void
+  onSaved: () => void
+}) {
   const { register, handleSubmit, reset, setValue, watch } = useForm({
     defaultValues: {
       name: divider?.name ?? "",
@@ -229,24 +293,55 @@ function DividerSheet({ open, divider, onClose, onSaved }: { open: boolean; divi
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent>
-        <SheetHeader><SheetTitle>{divider ? "Edit Divider" : "Add Divider"}</SheetTitle></SheetHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-          <div className="space-y-1.5"><Label>Name *</Label><Input {...register("name")} required /></div>
-          <div className="space-y-1.5"><Label>Phone</Label><Input {...register("phoneNumber")} /></div>
-          <div className="space-y-1.5"><Label>LGA</Label><Input {...register("lga")} /></div>
-          <div className="space-y-1.5"><Label>Ward</Label><Input {...register("ward")} /></div>
-          <div className="space-y-1.5"><Label>Community</Label><Input {...register("community")} /></div>
-          <div className="space-y-1.5"><Label>Notes</Label><Textarea {...register("notes")} rows={2} /></div>
+      <SheetContent className="overflow-y-auto">
+        <SheetHeader className="border-b">
+          <SheetTitle>{divider ? "Edit Divider" : "Add Divider"}</SheetTitle>
+        </SheetHeader>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="container mt-6 space-y-4"
+        >
+          <div className="space-y-1.5">
+            <Label>Name *</Label>
+            <Input {...register("name")} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Phone</Label>
+            <Input {...register("phoneNumber")} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>LGA</Label>
+            <Input {...register("lga")} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Ward</Label>
+            <Input {...register("ward")} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Community</Label>
+            <Input {...register("community")} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Notes</Label>
+            <Textarea {...register("notes")} rows={2} />
+          </div>
           {divider && (
             <div className="flex items-center gap-2">
-              <Checkbox id="isActive" checked={watch("isActive")} onCheckedChange={(v) => setValue("isActive", !!v)} />
+              <Checkbox
+                id="isActive"
+                checked={watch("isActive")}
+                onCheckedChange={(v) => setValue("isActive", !!v)}
+              />
               <Label htmlFor="isActive">Active</Label>
             </div>
           )}
-          <SheetFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
+          <SheetFooter className="px-0 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save"}
+            </Button>
           </SheetFooter>
         </form>
       </SheetContent>
