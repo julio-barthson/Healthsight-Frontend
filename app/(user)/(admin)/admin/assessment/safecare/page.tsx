@@ -117,8 +117,8 @@ type Question = {
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300",
-  ACTIVE: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  CLOSED: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+  ACTIVE: "bg-brand-verdant-100 text-brand-verdant-700 dark:bg-brand-verdant-900 dark:text-brand-verdant-300",
+  CLOSED: "bg-brand-crimson-100 text-brand-crimson-700 dark:bg-brand-crimson-900 dark:text-brand-crimson-300",
 }
 
 const QUARTERS: Quarter[] = ["Q1", "Q2", "Q3", "Q4"]
@@ -241,10 +241,10 @@ export default function SafecareAdminPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <SummaryCard
-          icon={<ShieldCheck className="h-5 w-5 text-green-600" />}
+          icon={<ShieldCheck className="h-5 w-5 text-brand-verdant-600" />}
           label="Active Periods"
           value={active.length}
-          bg="bg-green-50 dark:bg-green-950/40"
+          bg="bg-brand-verdant-50 dark:bg-brand-verdant-900/40"
         />
         <SummaryCard
           icon={<Clock className="h-5 w-5 text-gray-500" />}
@@ -253,10 +253,10 @@ export default function SafecareAdminPage() {
           bg="bg-gray-50 dark:bg-gray-900/40"
         />
         <SummaryCard
-          icon={<BarChart3 className="h-5 w-5 text-blue-600" />}
+          icon={<BarChart3 className="h-5 w-5 text-brand-sky-600" />}
           label="Total Submissions"
           value={totalSubmissions}
-          bg="bg-blue-50 dark:bg-blue-950/40"
+          bg="bg-brand-sky-50 dark:bg-brand-sky-900/40"
         />
       </div>
 

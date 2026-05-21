@@ -59,7 +59,7 @@ function EditWindowBadge({ daysLeft }: { daysLeft: number }) {
     )
   if (daysLeft <= 2)
     return (
-      <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+      <span className="text-xs font-medium text-brand-amber-600 dark:text-brand-amber-400">
         {daysLeft} day{daysLeft !== 1 ? "s" : ""} left to edit
       </span>
     )
@@ -84,7 +84,7 @@ function OpenCard({ p }: { p: MyPeriod }) {
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">{p.title}</h3>
             {isComplete ? (
-              <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+              <Badge className="bg-brand-verdant-100 text-brand-verdant-700 dark:bg-brand-verdant-900 dark:text-brand-verdant-300">
                 <CheckCircle2 className="mr-1 h-3 w-3" /> Submitted
               </Badge>
             ) : !sub ? (
@@ -134,7 +134,7 @@ function UpcomingCard({ p }: { p: MyPeriod }) {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold">{p.title}</h3>
-            <Badge variant="outline" className="text-blue-600 dark:text-blue-400">
+            <Badge variant="outline" className="text-brand-sky-600 dark:text-brand-sky-400">
               <Calendar className="mr-1 h-3 w-3" /> Upcoming
             </Badge>
           </div>
@@ -163,7 +163,7 @@ function ClosedCard({ p }: { p: MyPeriod }) {
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">{p.title}</h3>
-            <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+            <Badge className="bg-brand-verdant-100 text-brand-verdant-700 dark:bg-brand-verdant-900 dark:text-brand-verdant-300">
               <CheckCircle2 className="mr-1 h-3 w-3" /> Submitted
             </Badge>
           </div>
@@ -187,7 +187,7 @@ function ClosedCard({ p }: { p: MyPeriod }) {
 
 function MissedCard({ p }: { p: MyPeriod }) {
   return (
-    <div className="space-y-2 rounded-lg border border-red-200 bg-red-50/40 p-5 dark:border-red-900 dark:bg-red-950/20">
+    <div className="space-y-2 rounded-lg border border-brand-crimson-200 bg-brand-crimson-50/40 p-5 dark:border-brand-crimson-900 dark:bg-brand-crimson-900/20">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">

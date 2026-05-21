@@ -64,8 +64,8 @@ type PendingUser = {
 }
 
 const STATUS_CONFIG: Record<AccountStatus, { label: string; className: string }> = {
-  PENDING: { label: "Pending", className: "bg-amber-100 text-amber-700 hover:bg-amber-100" },
-  REJECTED: { label: "Rejected", className: "bg-red-100 text-red-700 hover:bg-red-100" },
+  PENDING: { label: "Pending", className: "bg-brand-amber-100 text-brand-amber-700 hover:bg-brand-amber-100" },
+  REJECTED: { label: "Rejected", className: "bg-brand-crimson-100 text-brand-crimson-700 hover:bg-brand-crimson-100" },
 }
 
 function formatDate(dateStr: string) {
@@ -270,7 +270,7 @@ export default function PendingUsersPage() {
                               <DropdownMenuItem
                                 onClick={() => handleApprove(user)}
                                 disabled={approveLoading}
-                                className="text-green-600 focus:text-green-600"
+                                className="text-brand-verdant-600 focus:text-brand-verdant-600"
                               >
                                 <CheckCircle className="mr-2 size-4" />
                                 Approve

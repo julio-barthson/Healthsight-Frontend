@@ -101,9 +101,9 @@ export default function SmsAdminPage() {
       {stats ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard label="Total" value={stats.total} />
-          <StatCard label="Delivered" value={stats.sent} color="text-green-600" />
+          <StatCard label="Delivered" value={stats.sent} color="text-brand-verdant-600" />
           <StatCard label="Failed" value={stats.failed} color="text-destructive" />
-          <StatCard label="Pending" value={stats.pending} color="text-amber-600" />
+          <StatCard label="Pending" value={stats.pending} color="text-brand-amber-600" />
         </div>
       ) : (
         <div className="grid grid-cols-4 gap-4">

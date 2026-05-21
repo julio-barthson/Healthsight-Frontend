@@ -54,7 +54,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               className="hover:bg-transparent"
             >
               <a href="/">
-                <Logo />
+                <Logo className="size-9" />
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

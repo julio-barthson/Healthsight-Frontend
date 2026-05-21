@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  CalendarDays,
   ChevronRight,
   MapPin,
   Building2,
@@ -45,10 +46,19 @@ function getGreeting() {
   return "Good evening"
 }
 
+type AppointmentStats = {
+  total: number
+  upcoming: number
+  overdue: number
+  completedThisWeek: number
+  noShows: number
+}
+
 export default function StaffDashboardPage() {
   const { user } = useAuth()
   const [periods, setPeriods] = useState<MyPeriod[]>([])
   const [loading, setLoading] = useState(true)
+  const [aptStats, setAptStats] = useState<AppointmentStats | null>(null)
 
   useEffect(() => {
     api
@@ -56,6 +66,11 @@ export default function StaffDashboardPage() {
       .then((res) => setPeriods(res.data.open ?? []))
       .catch(() => toast.error("Failed to load assessments"))
       .finally(() => setLoading(false))
+
+    api
+      .get("/appointments/stats")
+      .then((res) => setAptStats(res.data))
+      .catch(() => {})
   }, [])
 
   const completed = periods.filter(
@@ -116,28 +131,28 @@ export default function StaffDashboardPage() {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard
-            icon={<ClipboardList className="h-5 w-5 text-blue-500" />}
+            icon={<ClipboardList className="h-5 w-5 text-brand-sky-500" />}
             label="Active Periods"
             value={periods.length}
-            bg="bg-blue-50 dark:bg-blue-950/50"
+            bg="bg-brand-sky-50 dark:bg-brand-sky-900/40"
           />
           <StatCard
-            icon={<CheckCircle2 className="h-5 w-5 text-green-500" />}
+            icon={<CheckCircle2 className="h-5 w-5 text-brand-verdant-500" />}
             label="Completed"
             value={completed.length}
-            bg="bg-green-50 dark:bg-green-950/50"
+            bg="bg-brand-verdant-50 dark:bg-brand-verdant-900/40"
           />
           <StatCard
-            icon={<Clock className="h-5 w-5 text-amber-500" />}
+            icon={<Clock className="h-5 w-5 text-brand-amber-500" />}
             label="In Progress"
             value={inProgress.length}
-            bg="bg-amber-50 dark:bg-amber-950/50"
+            bg="bg-brand-amber-50 dark:bg-brand-amber-900/40"
           />
           <StatCard
-            icon={<AlertCircle className="h-5 w-5 text-red-500" />}
+            icon={<AlertCircle className="h-5 w-5 text-brand-crimson-500" />}
             label="Not Started"
             value={notStarted.length}
-            bg="bg-red-50 dark:bg-red-950/50"
+            bg="bg-brand-crimson-50 dark:bg-brand-crimson-900/40"
           />
         </div>
       )}
@@ -192,7 +207,7 @@ export default function StaffDashboardPage() {
                 >
                   {isComplete && (
                     <div className="absolute top-3 right-3">
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <CheckCircle2 className="h-5 w-5 text-brand-verdant-500" />
                     </div>
                   )}
 
@@ -257,6 +272,46 @@ export default function StaffDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* ── APPOINTMENT STATS ─────────────────────────────────────────────── */}
+      {aptStats && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Appointments</h2>
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/appointments">
+                View all <ChevronRight className="ml-1 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <StatCard
+              icon={<CalendarDays className="h-5 w-5 text-brand-sky-500" />}
+              label="Upcoming (7d)"
+              value={aptStats.upcoming}
+              bg="bg-brand-sky-50 dark:bg-brand-sky-900/40"
+            />
+            <StatCard
+              icon={<AlertCircle className="h-5 w-5 text-brand-crimson-500" />}
+              label="Overdue"
+              value={aptStats.overdue}
+              bg="bg-brand-crimson-50 dark:bg-brand-crimson-900/40"
+            />
+            <StatCard
+              icon={<CheckCircle2 className="h-5 w-5 text-brand-verdant-500" />}
+              label="Completed Today"
+              value={aptStats.completedThisWeek}
+              bg="bg-brand-verdant-50 dark:bg-brand-verdant-900/40"
+            />
+            <StatCard
+              icon={<Clock className="h-5 w-5 text-brand-amber-500" />}
+              label="No-Shows"
+              value={aptStats.noShows}
+              bg="bg-brand-amber-50 dark:bg-brand-amber-900/40"
+            />
+          </div>
+        </div>
+      )}
 
       {/* ── LOCATION INFO ────────────────────────────────────────────────────── */}
       {(user?.phc || user?.lga || user?.district) && (

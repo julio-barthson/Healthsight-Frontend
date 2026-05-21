@@ -4,78 +4,305 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ──────────────────────────────────────────────────────────────────────────
+   LSHD1 brand foundation — derived from the Lagos State Health District I seal.
+   Brand scales are namespaced --brand-* so they never collide with Tailwind's
+   built-in sky/amber. Semantic + shadcn tokens below are remapped onto them.
+   See docs/Design_PRD.md for the authoritative source.
+   ────────────────────────────────────────────────────────────────────────── */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.488 0.243 264.376);
-    --primary-foreground: oklch(0.97 0.014 254.604);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.809 0.105 251.813);
-    --chart-2: oklch(0.623 0.214 259.815);
-    --chart-3: oklch(0.546 0.245 262.881);
-    --chart-4: oklch(0.488 0.243 264.376);
-    --chart-5: oklch(0.424 0.199 265.638);
+    /* ── Brand palette (static across all themes) ── */
+    --brand-sky-50: #ebf7fd;
+    --brand-sky-100: #c5e9f8;
+    --brand-sky-200: #9edaf3;
+    --brand-sky-300: #78cbee;
+    --brand-sky-400: #51bce9;
+    --brand-sky-500: #29abe2;
+    --brand-sky-600: #1e8dbb;
+    --brand-sky-700: #166e93;
+    --brand-sky-800: #0e506a;
+    --brand-sky-900: #063242;
+
+    --brand-crimson-50: #fbeaec;
+    --brand-crimson-100: #f2bbbf;
+    --brand-crimson-200: #e88c92;
+    --brand-crimson-300: #de5d65;
+    --brand-crimson-400: #d43e47;
+    --brand-crimson-500: #be1e2d;
+    --brand-crimson-600: #991824;
+    --brand-crimson-700: #73121b;
+    --brand-crimson-800: #4e0c12;
+    --brand-crimson-900: #290609;
+
+    --brand-amber-50: #fef4e7;
+    --brand-amber-100: #fde0b8;
+    --brand-amber-200: #fbcc89;
+    --brand-amber-300: #fab85a;
+    --brand-amber-400: #f9a43b;
+    --brand-amber-500: #f7941d;
+    --brand-amber-600: #c97818;
+    --brand-amber-700: #9b5c12;
+    --brand-amber-800: #6d400c;
+    --brand-amber-900: #3f2406;
+
+    --brand-verdant-50: #e8f3e9;
+    --brand-verdant-100: #bbdabc;
+    --brand-verdant-200: #8ec28f;
+    --brand-verdant-300: #61aa63;
+    --brand-verdant-400: #469748;
+    --brand-verdant-500: #2a7a2e;
+    --brand-verdant-600: #226325;
+    --brand-verdant-700: #194b1c;
+    --brand-verdant-800: #113313;
+    --brand-verdant-900: #081b0a;
+
+    --brand-charcoal-50: #f2f2f2;
+    --brand-charcoal-100: #d9d9d9;
+    --brand-charcoal-200: #bfbfbf;
+    --brand-charcoal-300: #a6a6a6;
+    --brand-charcoal-400: #737373;
+    --brand-charcoal-500: #404040;
+    --brand-charcoal-600: #333333;
+    --brand-charcoal-700: #262626;
+    --brand-charcoal-800: #1a1a1a;
+    --brand-charcoal-900: #0d0d0d;
+
+    /* ── Daylight semantic tokens (PRD §3, Theme A) ── */
+    --bg-base: #f5fbfe;
+    --bg-surface: #ffffff;
+    --bg-raised: var(--brand-sky-50);
+    --border-default: var(--brand-sky-100);
+    --border-strong: var(--brand-sky-500);
+    --action-primary: var(--brand-sky-600);
+    --action-primary-hover: var(--brand-sky-700);
+    --action-danger: var(--brand-crimson-500);
+    --action-warning: var(--brand-amber-500);
+    --action-success: var(--brand-verdant-500);
+    --text-primary: var(--brand-charcoal-800);
+    --text-secondary: var(--brand-charcoal-500);
+    --text-muted: var(--brand-charcoal-400);
+    --text-on-primary: #ffffff;
+    --text-heading: var(--brand-sky-600);
+
+    /* ── Motion tokens (PRD §7.1) ── */
+    --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --duration-fast: 100ms;
+    --duration-base: 200ms;
+    --duration-slow: 350ms;
+    --duration-reveal: 500ms;
+
+    /* ── shadcn tokens → brand (Daylight) ── */
+    --background: var(--bg-base);
+    --foreground: var(--text-primary);
+    --card: var(--bg-surface);
+    --card-foreground: var(--text-primary);
+    --popover: var(--bg-surface);
+    --popover-foreground: var(--text-primary);
+    --primary: var(--action-primary);
+    --primary-foreground: #ffffff;
+    --secondary: var(--brand-sky-50);
+    --secondary-foreground: var(--brand-sky-700);
+    --muted: var(--brand-charcoal-50);
+    --muted-foreground: var(--text-muted);
+    --accent: var(--brand-sky-50);
+    --accent-foreground: var(--brand-sky-700);
+    --destructive: var(--action-danger);
+    --border: var(--border-default);
+    --input: var(--border-default);
+    --ring: var(--brand-sky-500);
+    --chart-1: var(--brand-sky-500);
+    --chart-2: var(--brand-verdant-500);
+    --chart-3: var(--brand-amber-500);
+    --chart-4: var(--brand-crimson-500);
+    --chart-5: var(--brand-charcoal-500);
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.546 0.245 262.881);
-    --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar: var(--brand-sky-600);
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: var(--brand-amber-500);
+    --sidebar-primary-foreground: var(--brand-charcoal-800);
+    --sidebar-accent: var(--brand-sky-700);
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: var(--brand-sky-700);
+    --sidebar-ring: var(--brand-sky-500);
 }
 
+/* ── Night (Theme B) — near-black/charcoal, bound to next-themes' .dark class.
+   Sky leads as the accent; verdant stays only for success semantics. ── */
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.424 0.199 265.638);
-    --primary-foreground: oklch(0.97 0.014 254.604);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.809 0.105 251.813);
-    --chart-2: oklch(0.623 0.214 259.815);
-    --chart-3: oklch(0.546 0.245 262.881);
-    --chart-4: oklch(0.488 0.243 264.376);
-    --chart-5: oklch(0.424 0.199 265.638);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.623 0.214 259.815);
-    --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --bg-base: #0a0a0a;
+    --bg-surface: var(--brand-charcoal-900);
+    --bg-raised: var(--brand-charcoal-800);
+    --border-default: var(--brand-charcoal-700);
+    --border-strong: var(--brand-charcoal-500);
+    --action-primary: var(--brand-sky-500);
+    --action-primary-hover: var(--brand-sky-400);
+    --action-danger: var(--brand-crimson-300);
+    --action-warning: var(--brand-amber-300);
+    --action-success: var(--brand-verdant-300);
+    --text-primary: var(--brand-charcoal-50);
+    --text-secondary: var(--brand-charcoal-200);
+    --text-muted: var(--brand-charcoal-300);
+    --text-on-primary: #0a0a0a;
+    --text-heading: var(--brand-sky-300);
+
+    --background: var(--bg-base);
+    --foreground: var(--text-primary);
+    --card: var(--bg-surface);
+    --card-foreground: var(--text-primary);
+    --popover: var(--bg-raised);
+    --popover-foreground: var(--text-primary);
+    --primary: var(--action-primary);
+    --primary-foreground: var(--text-on-primary);
+    --secondary: var(--brand-charcoal-800);
+    --secondary-foreground: var(--brand-charcoal-50);
+    --muted: var(--brand-charcoal-800);
+    --muted-foreground: var(--text-muted);
+    --accent: var(--brand-charcoal-700);
+    --accent-foreground: var(--brand-charcoal-50);
+    --destructive: var(--action-danger);
+    --border: var(--brand-charcoal-700);
+    --input: var(--brand-charcoal-700);
+    --ring: var(--brand-sky-500);
+    --chart-1: var(--brand-sky-400);
+    --chart-2: var(--brand-verdant-300);
+    --chart-3: var(--brand-amber-300);
+    --chart-4: var(--brand-crimson-300);
+    --chart-5: var(--brand-charcoal-300);
+    --sidebar: var(--brand-charcoal-900);
+    --sidebar-foreground: var(--brand-charcoal-100);
+    --sidebar-primary: var(--brand-amber-500);
+    --sidebar-primary-foreground: var(--brand-charcoal-900);
+    --sidebar-accent: var(--brand-charcoal-800);
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: var(--brand-charcoal-800);
+    --sidebar-ring: var(--brand-sky-500);
+}
+
+/* ── Lagos Warmth (PRD §3, Theme C) — driven by next-themes' .lagos-warmth class ── */
+.lagos-warmth {
+    --bg-base: #fffbf4;
+    --bg-surface: #ffffff;
+    --bg-raised: var(--brand-amber-50);
+    --border-default: var(--brand-amber-100);
+    --border-strong: var(--brand-amber-500);
+    --action-primary: var(--brand-amber-600);
+    --action-primary-hover: var(--brand-amber-700);
+    --action-danger: var(--brand-crimson-500);
+    --action-warning: var(--brand-amber-500);
+    --action-success: var(--brand-verdant-500);
+    --text-primary: var(--brand-charcoal-800);
+    --text-secondary: var(--brand-amber-900);
+    --text-muted: var(--brand-amber-800);
+    --text-on-primary: #ffffff;
+    --text-heading: var(--brand-amber-700);
+
+    --background: var(--bg-base);
+    --foreground: var(--text-primary);
+    --card: var(--bg-surface);
+    --card-foreground: var(--text-primary);
+    --popover: var(--bg-surface);
+    --popover-foreground: var(--text-primary);
+    --primary: var(--action-primary);
+    --primary-foreground: #ffffff;
+    --secondary: var(--brand-amber-50);
+    --secondary-foreground: var(--brand-amber-700);
+    --muted: var(--brand-amber-50);
+    --muted-foreground: var(--text-muted);
+    --accent: var(--brand-amber-50);
+    --accent-foreground: var(--brand-amber-700);
+    --destructive: var(--action-danger);
+    --border: var(--border-default);
+    --input: var(--border-default);
+    --ring: var(--brand-amber-500);
+    --sidebar: var(--brand-charcoal-800);
+    --sidebar-foreground: var(--brand-amber-100);
+    --sidebar-primary: var(--brand-amber-500);
+    --sidebar-primary-foreground: var(--brand-charcoal-800);
+    --sidebar-accent: var(--brand-charcoal-700);
+    --sidebar-accent-foreground: var(--brand-amber-100);
+    --sidebar-border: var(--brand-charcoal-700);
+    --sidebar-ring: var(--brand-amber-500);
+}
+
+/* ── Staggered entry motion (PRD §7.2), reduced-motion aware ── */
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes brand-fade-up {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .animate-brand-fade-up {
+        animation: brand-fade-up var(--duration-reveal) var(--ease-out) both;
+    }
 }
 
 @theme inline {
     --font-sans: var(--font-sans);
+    --font-display: var(--font-display);
     --font-heading: var(--font-heading);
+    --font-ui: var(--font-ui);
+    --font-accent: var(--font-accent);
+    --font-mono: var(--font-mono);
+
+    /* Brand scales → utilities (e.g. bg-brand-sky-600, text-brand-charcoal-800) */
+    --color-brand-sky-50: var(--brand-sky-50);
+    --color-brand-sky-100: var(--brand-sky-100);
+    --color-brand-sky-200: var(--brand-sky-200);
+    --color-brand-sky-300: var(--brand-sky-300);
+    --color-brand-sky-400: var(--brand-sky-400);
+    --color-brand-sky-500: var(--brand-sky-500);
+    --color-brand-sky-600: var(--brand-sky-600);
+    --color-brand-sky-700: var(--brand-sky-700);
+    --color-brand-sky-800: var(--brand-sky-800);
+    --color-brand-sky-900: var(--brand-sky-900);
+    --color-brand-crimson-50: var(--brand-crimson-50);
+    --color-brand-crimson-100: var(--brand-crimson-100);
+    --color-brand-crimson-200: var(--brand-crimson-200);
+    --color-brand-crimson-300: var(--brand-crimson-300);
+    --color-brand-crimson-400: var(--brand-crimson-400);
+    --color-brand-crimson-500: var(--brand-crimson-500);
+    --color-brand-crimson-600: var(--brand-crimson-600);
+    --color-brand-crimson-700: var(--brand-crimson-700);
+    --color-brand-crimson-800: var(--brand-crimson-800);
+    --color-brand-crimson-900: var(--brand-crimson-900);
+    --color-brand-amber-50: var(--brand-amber-50);
+    --color-brand-amber-100: var(--brand-amber-100);
+    --color-brand-amber-200: var(--brand-amber-200);
+    --color-brand-amber-300: var(--brand-amber-300);
+    --color-brand-amber-400: var(--brand-amber-400);
+    --color-brand-amber-500: var(--brand-amber-500);
+    --color-brand-amber-600: var(--brand-amber-600);
+    --color-brand-amber-700: var(--brand-amber-700);
+    --color-brand-amber-800: var(--brand-amber-800);
+    --color-brand-amber-900: var(--brand-amber-900);
+    --color-brand-verdant-50: var(--brand-verdant-50);
+    --color-brand-verdant-100: var(--brand-verdant-100);
+    --color-brand-verdant-200: var(--brand-verdant-200);
+    --color-brand-verdant-300: var(--brand-verdant-300);
+    --color-brand-verdant-400: var(--brand-verdant-400);
+    --color-brand-verdant-500: var(--brand-verdant-500);
+    --color-brand-verdant-600: var(--brand-verdant-600);
+    --color-brand-verdant-700: var(--brand-verdant-700);
+    --color-brand-verdant-800: var(--brand-verdant-800);
+    --color-brand-verdant-900: var(--brand-verdant-900);
+    --color-brand-charcoal-50: var(--brand-charcoal-50);
+    --color-brand-charcoal-100: var(--brand-charcoal-100);
+    --color-brand-charcoal-200: var(--brand-charcoal-200);
+    --color-brand-charcoal-300: var(--brand-charcoal-300);
+    --color-brand-charcoal-400: var(--brand-charcoal-400);
+    --color-brand-charcoal-500: var(--brand-charcoal-500);
+    --color-brand-charcoal-600: var(--brand-charcoal-600);
+    --color-brand-charcoal-700: var(--brand-charcoal-700);
+    --color-brand-charcoal-800: var(--brand-charcoal-800);
+    --color-brand-charcoal-900: var(--brand-charcoal-900);
+
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -125,6 +352,8 @@
     }
   html {
     @apply font-sans;
+    /* Global type bump — rem-based utilities scale up proportionally */
+    font-size: 17px;
     }
 }
 

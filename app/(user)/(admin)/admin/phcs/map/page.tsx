@@ -92,7 +92,7 @@ export default function PhcMapPage() {
                     {phc.lga.name}
                   </p>
                   {phc.latitude ? (
-                    <span className="mt-1 inline-flex items-center gap-1 text-xs text-green-600">
+                    <span className="mt-1 inline-flex items-center gap-1 text-xs text-brand-verdant-600">
                       <MapPin className="h-3 w-3" /> Mapped
                     </span>
                   ) : (
