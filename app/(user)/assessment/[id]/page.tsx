@@ -79,7 +79,10 @@ export default function AssessmentFormPage() {
         const [periodRes, submissionRes] = await Promise.all([
           api
             .get("/assessment/my")
-            .then((r) => (r.data as Period[]).find((p) => p.id === id)),
+            .then((r) => {
+              const data = r.data as { open: Period[]; upcoming: Period[]; closed: Period[]; missed: Period[] }
+              return [...(data.open ?? []), ...(data.upcoming ?? []), ...(data.closed ?? []), ...(data.missed ?? [])].find((p) => p.id === id)
+            }),
           api
             .get(`/assessment/periods/${id}/my-submission`)
             .catch(() => ({ data: null })),
