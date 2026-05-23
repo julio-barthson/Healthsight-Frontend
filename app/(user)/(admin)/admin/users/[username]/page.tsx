@@ -61,15 +61,15 @@ const STATUS_CONFIG: Record<
 > = {
   ACTIVE: {
     label: "Active",
-    className: "bg-green-100 text-green-700 hover:bg-green-100",
+    className: "bg-brand-verdant-100 text-brand-verdant-700 hover:bg-brand-verdant-100",
   },
   PENDING: {
     label: "Pending",
-    className: "bg-amber-100 text-amber-700 hover:bg-amber-100",
+    className: "bg-brand-amber-100 text-brand-amber-700 hover:bg-brand-amber-100",
   },
   REJECTED: {
     label: "Rejected",
-    className: "bg-red-100 text-red-700 hover:bg-red-100",
+    className: "bg-brand-crimson-100 text-brand-crimson-700 hover:bg-brand-crimson-100",
   },
   SUSPENDED: {
     label: "Suspended",
@@ -222,7 +222,7 @@ export default function UserDetailPage() {
                 Reject
               </Button>
               <Button
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-brand-verdant-600 hover:bg-brand-verdant-700"
                 onClick={handleApprove}
                 disabled={actionLoading}
               >

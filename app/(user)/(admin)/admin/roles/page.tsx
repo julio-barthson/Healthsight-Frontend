@@ -238,7 +238,7 @@ export default function AdminRolesPage() {
                   <TableCell>
                     {role.isAvailableForRegistration ? (
                       <Badge
-                        className="bg-green-100 text-green-700 hover:bg-green-100"
+                        className="bg-brand-verdant-100 text-brand-verdant-700 hover:bg-brand-verdant-100"
                         variant="secondary"
                       >
                         Available
@@ -261,7 +261,7 @@ export default function AdminRolesPage() {
                   <TableCell>
                     {role.isActive ? (
                       <Badge
-                        className="bg-green-100 text-green-700 hover:bg-green-100"
+                        className="bg-brand-verdant-100 text-brand-verdant-700 hover:bg-brand-verdant-100"
                         variant="secondary"
                       >
                         Active

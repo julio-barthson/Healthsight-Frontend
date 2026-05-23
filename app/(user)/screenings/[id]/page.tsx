@@ -273,7 +273,7 @@ export default function ScreeningDetailPage() {
       {isDone && (screening.doctorNotes || screening.referralNote) && (
         <div className="space-y-3 rounded-lg border p-5">
           <div className="flex items-center gap-2 font-semibold">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <CheckCircle2 className="h-4 w-4 text-brand-verdant-500" />
             Doctor Assessment
           </div>
           {screening.doctorNotes && (

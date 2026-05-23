@@ -110,7 +110,7 @@ type Question = {
   id: string
   text: string
   order: number
-  type: "YES_NO_NA" | "SINGLE_SELECT" | "MULTI_SELECT"
+  type: "YES_NO_NA" | "SINGLE_SELECT" | "MULTI_SELECT" | "TEXT_INPUT"
   category: Category
   categoryId: string
   roles: { role: Role }[]
@@ -133,14 +133,15 @@ type Period = {
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300",
-  ACTIVE: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-  CLOSED: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+  ACTIVE: "bg-brand-verdant-100 text-brand-verdant-700 dark:bg-brand-verdant-900 dark:text-brand-verdant-300",
+  CLOSED: "bg-brand-crimson-100 text-brand-crimson-700 dark:bg-brand-crimson-900 dark:text-brand-crimson-300",
 }
 
 const Q_TYPE_LABELS: Record<string, string> = {
   YES_NO_NA: "Yes / No / N/A",
   SINGLE_SELECT: "Single Choice",
   MULTI_SELECT: "Multi Choice",
+  TEXT_INPUT: "Open-Ended Response",
 }
 
 // ─── SCHEMAS ──────────────────────────────────────────────────────────────────
@@ -155,7 +156,7 @@ const optionSchema = z.object({
 
 const questionSchema = z.object({
   text: z.string().min(1, "Question text is required"),
-  type: z.enum(["YES_NO_NA", "SINGLE_SELECT", "MULTI_SELECT"]),
+  type: z.enum(["YES_NO_NA", "SINGLE_SELECT", "MULTI_SELECT", "TEXT_INPUT"]),
   categoryId: z.string().min(1, "Category is required"),
   roleIds: z.array(z.string()),
   options: z.array(optionSchema),
@@ -1089,6 +1090,9 @@ function QuestionSheet({
                         <SelectItem value="MULTI_SELECT">
                           Multi Choice
                         </SelectItem>
+                        <SelectItem value="TEXT_INPUT">
+                          Open-Ended Response
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -1129,7 +1133,7 @@ function QuestionSheet({
               )}
 
               {/* Options (SINGLE/MULTI only) */}
-              {questionType !== "YES_NO_NA" && (
+              {questionType !== "YES_NO_NA" && questionType !== "TEXT_INPUT" && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <Label>Options</Label>

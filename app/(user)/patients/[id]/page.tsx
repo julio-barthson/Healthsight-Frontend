@@ -5,8 +5,9 @@ import { useParams } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { Plus, Stethoscope, Calendar, Activity, MessageSquare } from "lucide-react"
+import { Plus, Stethoscope, Calendar, CalendarPlus, Activity, MessageSquare } from "lucide-react"
 
+import { getScreeningLabel } from "@/lib/screening-labels"
 import { PageHeader } from "@/components/PageHeader"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,7 +20,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
@@ -29,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import api from "@/lib/api"
+import { useDocumentTitle } from "@/hooks/use-document-title"
 
 type Patient = {
   id: string
@@ -81,9 +85,11 @@ const ALL_SCREENING_TYPES = [
 ]
 
 const FEMALE_ONLY_TYPES = ["CERVICAL_CANCER", "BREAST_CANCER"]
+const MALE_ONLY_TYPES = ["PSA"]
 
 function getAvailableScreeningTypes(gender: "MALE" | "FEMALE") {
   if (gender === "MALE") return ALL_SCREENING_TYPES.filter((t) => !FEMALE_ONLY_TYPES.includes(t))
+  if (gender === "FEMALE") return ALL_SCREENING_TYPES.filter((t) => !MALE_ONLY_TYPES.includes(t))
   return ALL_SCREENING_TYPES
 }
 
@@ -105,12 +111,25 @@ export default function PatientDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [patient, setPatient] = useState<Patient | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Tab title becomes e.g. "Tomiwa Adelae | Healthsight" once loaded.
+  useDocumentTitle(
+    patient ? `${patient.firstName} ${patient.lastName}` : null
+  )
   const [showScreeningDialog, setShowScreeningDialog] = useState(false)
   const [screeningType, setScreeningType] = useState("")
   const [creating, setCreating] = useState(false)
   const [showSmsDialog, setShowSmsDialog] = useState(false)
   const [smsMessage, setSmsMessage] = useState("")
   const [sendingSms, setSendingSms] = useState(false)
+  const [showFollowupDialog, setShowFollowupDialog] = useState(false)
+  const [followupDate, setFollowupDate] = useState("")
+  const [followupTime, setFollowupTime] = useState("09:00")
+  const [followupType, setFollowupType] = useState("")
+  const [followupInstructions, setFollowupInstructions] = useState("")
+  const [followupSendSms, setFollowupSendSms] = useState(true)
+  const [followupReminderDays, setFollowupReminderDays] = useState(1)
+  const [creatingFollowup, setCreatingFollowup] = useState(false)
 
   useEffect(() => {
     api
@@ -150,6 +169,37 @@ export default function PatientDetailPage() {
     }
   }
 
+  const createFollowup = async () => {
+    if (!followupDate || !followupType) {
+      toast.error("Please fill in the date and type.")
+      return
+    }
+    setCreatingFollowup(true)
+    try {
+      await api.post("/appointments/followup", {
+        patientId: id,
+        followupDate,
+        followupTime,
+        followupType,
+        followupInstructions: followupInstructions || undefined,
+        sendSmsReminder: followupSendSms,
+        reminderDaysBefore: followupReminderDays,
+      })
+      toast.success("Follow-up scheduled successfully")
+      setShowFollowupDialog(false)
+      setFollowupDate("")
+      setFollowupTime("09:00")
+      setFollowupType("")
+      setFollowupInstructions("")
+      setFollowupSendSms(true)
+      setFollowupReminderDays(1)
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Failed to schedule follow-up")
+    } finally {
+      setCreatingFollowup(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -179,6 +229,10 @@ export default function PatientDetailPage() {
                 Send SMS
               </Button>
             )}
+            <Button variant="outline" onClick={() => setShowFollowupDialog(true)}>
+              <CalendarPlus className="mr-2 h-4 w-4" />
+              Follow-up
+            </Button>
             <Button onClick={() => setShowScreeningDialog(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Screening
@@ -237,7 +291,7 @@ export default function PatientDetailPage() {
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2 font-medium">
                     <span className="font-mono text-xs text-muted-foreground">{s.screeningNumber}</span>
-                    <span>{s.screeningType.replace(/_/g, " ")}</span>
+                    <span>{getScreeningLabel(s.screeningType)}</span>
                     <Badge variant={statusColor[s.status] as any}>{s.status.replace(/_/g, " ")}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -321,7 +375,7 @@ export default function PatientDetailPage() {
               </SelectTrigger>
               <SelectContent>
                 {getAvailableScreeningTypes(patient.gender).map((t) => (
-                  <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>
+                  <SelectItem key={t} value={t}>{getScreeningLabel(t)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -330,11 +384,80 @@ export default function PatientDetailPage() {
                 Cervical Cancer and Breast Cancer screenings are not available for male patients.
               </p>
             )}
+            {patient.gender === "FEMALE" && (
+              <p className="text-xs text-muted-foreground">
+                Prostate-Specific Antigen (PSA) screening is not available for female patients.
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowScreeningDialog(false)}>Cancel</Button>
             <Button onClick={createScreening} disabled={!screeningType || creating}>
               {creating ? "Creating…" : "Start Screening"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Follow-up Dialog */}
+      <Dialog open={showFollowupDialog} onOpenChange={(open) => { setShowFollowupDialog(open) }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Schedule Follow-up</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Date *</Label>
+                <Input type="date" value={followupDate} onChange={(e) => setFollowupDate(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Time</Label>
+                <Input type="time" value={followupTime} onChange={(e) => setFollowupTime(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Type *</Label>
+              <Select value={followupType} onValueChange={setFollowupType}>
+                <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Follow-up Visit">Follow-up Visit</SelectItem>
+                  <SelectItem value="Lab Recheck">Lab Recheck</SelectItem>
+                  <SelectItem value="Specialist Referral">Specialist Referral</SelectItem>
+                  <SelectItem value="Medication Review">Medication Review</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Instructions</Label>
+              <Textarea
+                placeholder="Any special instructions..."
+                value={followupInstructions}
+                onChange={(e) => setFollowupInstructions(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-3">
+                <Switch checked={followupSendSms} onCheckedChange={setFollowupSendSms} id="followup-sms" />
+                <Label htmlFor="followup-sms" className="text-sm">SMS reminder</Label>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Days before</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={followupReminderDays}
+                  onChange={(e) => setFollowupReminderDays(Number(e.target.value))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFollowupDialog(false)}>Cancel</Button>
+            <Button onClick={createFollowup} disabled={!followupDate || !followupType || creatingFollowup}>
+              {creatingFollowup ? "Scheduling…" : "Schedule Follow-up"}
             </Button>
           </DialogFooter>
         </DialogContent>

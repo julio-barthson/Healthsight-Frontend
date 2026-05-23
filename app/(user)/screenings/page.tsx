@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Plus, ChevronLeft, ChevronRight } from "lucide-react"
 
+import { getScreeningLabel } from "@/lib/screening-labels"
 import { PageHeader } from "@/components/PageHeader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -51,6 +53,7 @@ const statusVariant: Record<string, any> = {
 }
 
 export default function ScreeningsPage() {
+  const router = useRouter()
   const [screenings, setScreenings] = useState<Screening[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -90,6 +93,14 @@ export default function ScreeningsPage() {
       <PageHeader
         title="Screenings"
         description={`${total} screening${total !== 1 ? "s" : ""}`}
+        action={
+          <Button asChild>
+            <Link href="/patients">
+              <Plus className="mr-2 h-4 w-4" />
+              New Screening
+            </Link>
+          </Button>
+        }
       />
 
       <div className="flex flex-wrap gap-3">
@@ -109,7 +120,7 @@ export default function ScreeningsPage() {
           <SelectContent>
             <SelectItem value="all">All types</SelectItem>
             {TYPE_OPTIONS.map((t) => (
-              <SelectItem key={t} value={t}>{t.replace(/_/g, " ")}</SelectItem>
+              <SelectItem key={t} value={t}>{getScreeningLabel(t)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -129,7 +140,7 @@ export default function ScreeningsPage() {
         )}
       </div>
 
-      <div className="rounded-lg border">
+      <div className="rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -140,7 +151,6 @@ export default function ScreeningsPage() {
               <TableHead>Vitals</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Conducted By</TableHead>
-              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -161,21 +171,25 @@ export default function ScreeningsPage() {
                   </TableRow>
                 )
               : screenings.map((s) => (
-                  <TableRow key={s.id}>
+                  <TableRow
+                    key={s.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => router.push(`/screenings/${s.id}`)}
+                  >
                     <TableCell className="font-mono text-xs">{s.screeningNumber}</TableCell>
                     <TableCell>
-                      <Link href={`/patients/${s.patient.id}`} className="font-medium hover:underline">
+                      <p className="font-medium">
                         {s.patient.firstName} {s.patient.lastName}
-                      </Link>
+                      </p>
                       <p className="text-xs text-muted-foreground">{s.patient.patientNumber}</p>
                     </TableCell>
-                    <TableCell className="text-sm">{s.screeningType.replace(/_/g, " ")}</TableCell>
+                    <TableCell className="text-sm">{getScreeningLabel(s.screeningType)}</TableCell>
                     <TableCell>
                       <Badge variant={statusVariant[s.status]}>{s.status.replace(/_/g, " ")}</Badge>
                     </TableCell>
                     <TableCell>
                       {s.vitals ? (
-                        <Badge variant="outline" className="text-green-600">Done</Badge>
+                        <Badge variant="outline" className="text-brand-verdant-600">Done</Badge>
                       ) : (
                         <span className="text-xs text-muted-foreground">None</span>
                       )}
@@ -185,11 +199,6 @@ export default function ScreeningsPage() {
                     </TableCell>
                     <TableCell className="text-xs">
                       {s.conductedBy.firstName} {s.conductedBy.lastName}
-                    </TableCell>
-                    <TableCell>
-                      <Button asChild size="sm" variant="ghost">
-                        <Link href={`/screenings/${s.id}`}>View</Link>
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

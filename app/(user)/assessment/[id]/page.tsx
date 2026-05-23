@@ -68,7 +68,9 @@ export default function AssessmentFormPage() {
   const [answers, setAnswers] = useState<AnswersMap>({})
   const [activeCatId, setActiveCatId] = useState<string>("")
   const [loading, setLoading] = useState(true)
-  const [saveStatus, setSaveStatus] = useState<"idle" | "pending" | "saving" | "saved" | "error">("idle")
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "pending" | "saving" | "saved" | "error"
+  >("idle")
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({})
@@ -79,10 +81,7 @@ export default function AssessmentFormPage() {
         const [periodRes, submissionRes] = await Promise.all([
           api
             .get("/assessment/my")
-            .then((r) => {
-              const data = r.data as { open: Period[]; upcoming: Period[]; closed: Period[]; missed: Period[] }
-              return [...(data.open ?? []), ...(data.upcoming ?? []), ...(data.closed ?? []), ...(data.missed ?? [])].find((p) => p.id === id)
-            }),
+            .then((r) => r.data.find((p: Period) => p.id === id)),
           api
             .get(`/assessment/periods/${id}/my-submission`)
             .catch(() => ({ data: null })),
@@ -102,6 +101,26 @@ export default function AssessmentFormPage() {
         for (const a of existingAnswers) {
           map[a.questionId] = a.selectedOptions
         }
+
+        // Restore from localStorage draft if server has no submission
+        if (Object.keys(map).length === 0) {
+          try {
+            const draft = localStorage.getItem(`hs_assessment_draft_${id}`)
+            if (draft) {
+              const parsed = JSON.parse(draft) as AnswersMap
+              if (Object.keys(parsed).length > 0) {
+                Object.assign(map, parsed)
+                toast.info("Resumed from your unsaved draft.")
+              }
+            }
+          } catch {}
+        } else {
+          // Server has data, clear any stale localStorage draft
+          try {
+            localStorage.removeItem(`hs_assessment_draft_${id}`)
+          } catch {}
+        }
+
         setAnswers(map)
       } catch {
         toast.error("Failed to load assessment")
@@ -175,8 +194,16 @@ export default function AssessmentFormPage() {
     return () => window.removeEventListener("beforeunload", onBeforeUnload)
   }, [saveStatus])
 
+  const draftKey = `hs_assessment_draft_${id}`
+
   function setAnswer(questionId: string, value: string[]) {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }))
+    setAnswers((prev) => {
+      const next = { ...prev, [questionId]: value }
+      try {
+        localStorage.setItem(draftKey, JSON.stringify(next))
+      } catch {}
+      return next
+    })
     setSaveStatus("pending")
 
     // Clear any existing debounce timer
@@ -202,18 +229,26 @@ export default function AssessmentFormPage() {
     const payload = {
       answers: Object.entries(currentAnswers ?? answers)
         .filter(([, v]) => v.length > 0)
-        .map(([questionId, selectedOptions]) => ({ questionId, selectedOptions })),
+        .map(([questionId, selectedOptions]) => ({
+          questionId,
+          selectedOptions,
+        })),
     }
     setSaveStatus("saving")
     try {
       await api.post(`/assessment/periods/${id}/submit`, payload)
       setSaveStatus("saved")
+      try {
+        localStorage.removeItem(`hs_assessment_draft_${id}`)
+      } catch {}
       // Reset to idle after 3 seconds
       savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 3000)
     } catch (err: any) {
       setSaveStatus("error")
       const msg = err?.response?.data?.message
-      toast.error(Array.isArray(msg) ? msg.join(", ") : msg || "Failed to save answers")
+      toast.error(
+        Array.isArray(msg) ? msg.join(", ") : msg || "Failed to save answers"
+      )
     }
   }
 
@@ -249,10 +284,14 @@ export default function AssessmentFormPage() {
         <Skeleton className="h-10 w-64" />
         <div className="flex gap-6">
           <div className="hidden w-56 shrink-0 space-y-2 md:block">
-            {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+            {[...Array(8)].map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full rounded-lg" />
+            ))}
           </div>
           <div className="flex-1 space-y-4">
-            {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
           </div>
         </div>
       </div>
@@ -286,7 +325,9 @@ export default function AssessmentFormPage() {
           <div className="flex items-center gap-3">
             {/* Auto-save status indicator */}
             {saveStatus === "pending" && (
-              <span className="text-xs text-muted-foreground">Unsaved changes</span>
+              <span className="text-xs text-muted-foreground">
+                Unsaved changes
+              </span>
             )}
             {saveStatus === "saving" && (
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -295,7 +336,7 @@ export default function AssessmentFormPage() {
               </span>
             )}
             {saveStatus === "saved" && (
-              <span className="flex items-center gap-1.5 text-xs text-green-600">
+              <span className="flex items-center gap-1.5 text-xs text-brand-verdant-600">
                 <CheckCircle2 className="h-3 w-3" />
                 All saved
               </span>
@@ -362,7 +403,7 @@ export default function AssessmentFormPage() {
               <div
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                   catComplete
-                    ? "bg-green-500 text-white"
+                    ? "bg-brand-verdant-500 text-white"
                     : isActive
                       ? "bg-primary/15 text-primary"
                       : "bg-muted-foreground/10 text-muted-foreground"
@@ -410,7 +451,7 @@ export default function AssessmentFormPage() {
                     <div
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                         catComplete
-                          ? "bg-green-500 text-white"
+                          ? "bg-brand-verdant-500 text-white"
                           : isActive
                             ? "bg-primary/15 text-primary"
                             : "bg-muted-foreground/10 text-muted-foreground"
@@ -442,7 +483,7 @@ export default function AssessmentFormPage() {
                     <div className="h-1 w-full rounded-full bg-muted">
                       <div
                         className={`h-1 rounded-full transition-all ${
-                          catComplete ? "bg-green-500" : "bg-primary"
+                          catComplete ? "bg-brand-verdant-500" : "bg-primary"
                         }`}
                         style={{ width: `${catPct}%` }}
                       />
@@ -491,13 +532,15 @@ export default function AssessmentFormPage() {
           {!closed && (
             <div className="flex items-center justify-end gap-3 pb-4">
               {saveStatus === "saved" && (
-                <span className="flex items-center gap-1.5 text-xs text-green-600">
+                <span className="flex items-center gap-1.5 text-xs text-brand-verdant-600">
                   <CheckCircle2 className="h-3 w-3" />
                   All saved
                 </span>
               )}
               {saveStatus === "pending" && (
-                <span className="text-xs text-muted-foreground">Unsaved changes</span>
+                <span className="text-xs text-muted-foreground">
+                  Unsaved changes
+                </span>
               )}
               <Button
                 size="lg"
@@ -544,7 +587,7 @@ function QuestionItem({
     <div
       className={`rounded-lg border p-4 transition-colors ${
         answered
-          ? "border-green-300 bg-green-50/30 dark:border-green-800 dark:bg-green-950/20"
+          ? "border-brand-verdant-300 bg-brand-verdant-50/30 dark:border-brand-verdant-800 dark:bg-brand-verdant-900/20"
           : ""
       }`}
     >
@@ -627,9 +670,7 @@ function QuestionItem({
       {question.type === "TEXT_INPUT" && (
         <Textarea
           value={value[0] ?? ""}
-          onChange={(e) =>
-            onChange(e.target.value ? [e.target.value] : [])
-          }
+          onChange={(e) => onChange(e.target.value ? [e.target.value] : [])}
           disabled={disabled}
           placeholder="Type your response here…"
           rows={3}

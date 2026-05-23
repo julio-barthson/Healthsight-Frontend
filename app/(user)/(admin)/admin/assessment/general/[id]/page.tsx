@@ -88,24 +88,24 @@ type Results = {
 }
 
 function safecareColor(label: string) {
-  if (label === "Fully Compliant") return "text-green-700 dark:text-green-400 font-medium"
-  if (label === "Partially Compliant") return "text-amber-600 dark:text-amber-400 font-medium"
-  if (label === "Not Compliant") return "text-red-600 dark:text-red-400 font-medium"
+  if (label === "Fully Compliant") return "text-brand-verdant-700 dark:text-brand-verdant-400 font-medium"
+  if (label === "Partially Compliant") return "text-brand-amber-600 dark:text-brand-amber-400 font-medium"
+  if (label === "Not Compliant") return "text-brand-crimson-600 dark:text-brand-crimson-400 font-medium"
   if (label === "Not Applicable") return "text-muted-foreground"
   return ""
 }
 
 function safecareBarColor(label: string) {
-  if (label === "Fully Compliant") return "[&>*]:bg-green-500"
-  if (label === "Partially Compliant") return "[&>*]:bg-amber-400"
-  if (label === "Not Compliant") return "[&>*]:bg-red-500"
+  if (label === "Fully Compliant") return "[&>*]:bg-brand-verdant-500"
+  if (label === "Partially Compliant") return "[&>*]:bg-brand-amber-400"
+  if (label === "Not Compliant") return "[&>*]:bg-brand-crimson-500"
   return ""
 }
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-600",
-  ACTIVE: "bg-green-100 text-green-700",
-  CLOSED: "bg-red-100 text-red-700",
+  ACTIVE: "bg-brand-verdant-100 text-brand-verdant-700",
+  CLOSED: "bg-brand-crimson-100 text-brand-crimson-700",
 }
 
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
@@ -193,16 +193,16 @@ export default function PeriodResultsPage() {
       {/* ── STATS CARDS ─────────────────────────────────────────────────────── */}
       <div className={`grid grid-cols-1 gap-2 ${period.type === "SAFECARE" ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
         <StatCard
-          icon={<Users className="h-5 w-5 text-blue-600" />}
+          icon={<Users className="h-5 w-5 text-brand-sky-600" />}
           label="Eligible Staff"
           value={stats.totalEligible}
-          bg="bg-blue-50 dark:bg-blue-950"
+          bg="bg-brand-sky-50 dark:bg-brand-sky-900"
         />
         <StatCard
-          icon={<CheckCircle2 className="h-5 w-5 text-green-600" />}
+          icon={<CheckCircle2 className="h-5 w-5 text-brand-verdant-600" />}
           label="Submitted"
           value={stats.totalSubmitted}
-          bg="bg-green-50 dark:bg-green-950"
+          bg="bg-brand-verdant-50 dark:bg-brand-verdant-900"
         />
         <div className="space-y-2 rounded-lg border p-4">
           <div className="flex items-center gap-2">
@@ -213,7 +213,7 @@ export default function PeriodResultsPage() {
           <Progress value={stats.completionRate} className="h-2" />
         </div>
         {period.type === "SAFECARE" && stats.complianceScore !== null && (
-          <div className={`space-y-2 rounded-lg border p-4 ${stats.complianceScore >= 75 ? "bg-green-50 dark:bg-green-950" : stats.complianceScore >= 50 ? "bg-amber-50 dark:bg-amber-950" : "bg-red-50 dark:bg-red-950"}`}>
+          <div className={`space-y-2 rounded-lg border p-4 ${stats.complianceScore >= 75 ? "bg-brand-verdant-50 dark:bg-brand-verdant-900" : stats.complianceScore >= 50 ? "bg-brand-amber-50 dark:bg-brand-amber-900" : "bg-brand-crimson-50 dark:bg-brand-crimson-900"}`}>
             <div className="flex items-center gap-2">
               <User className="h-5 w-5 text-primary" />
               <span className="text-sm text-muted-foreground">SafeCare Compliance</span>
@@ -221,7 +221,7 @@ export default function PeriodResultsPage() {
             <p className="text-2xl font-bold">{stats.complianceScore}%</p>
             <Progress
               value={stats.complianceScore}
-              className={`h-2 ${stats.complianceScore >= 75 ? "[&>*]:bg-green-500" : stats.complianceScore >= 50 ? "[&>*]:bg-amber-400" : "[&>*]:bg-red-500"}`}
+              className={`h-2 ${stats.complianceScore >= 75 ? "[&>*]:bg-brand-verdant-500" : stats.complianceScore >= 50 ? "[&>*]:bg-brand-amber-400" : "[&>*]:bg-brand-crimson-500"}`}
             />
           </div>
         )}
@@ -238,13 +238,13 @@ export default function PeriodResultsPage() {
                 <div key={cat.name} className="rounded-lg border p-3 space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium leading-tight">{cat.name}</p>
-                    <span className={`shrink-0 text-sm font-bold ${cat.score >= 75 ? "text-green-600" : cat.score >= 50 ? "text-amber-600" : "text-red-600"}`}>
+                    <span className={`shrink-0 text-sm font-bold ${cat.score >= 75 ? "text-brand-verdant-600" : cat.score >= 50 ? "text-brand-amber-600" : "text-brand-crimson-600"}`}>
                       {cat.score}%
                     </span>
                   </div>
                   <Progress
                     value={cat.score}
-                    className={`h-1.5 ${cat.score >= 75 ? "[&>*]:bg-green-500" : cat.score >= 50 ? "[&>*]:bg-amber-400" : "[&>*]:bg-red-500"}`}
+                    className={`h-1.5 ${cat.score >= 75 ? "[&>*]:bg-brand-verdant-500" : cat.score >= 50 ? "[&>*]:bg-brand-amber-400" : "[&>*]:bg-brand-crimson-500"}`}
                   />
                 </div>
               ))}
