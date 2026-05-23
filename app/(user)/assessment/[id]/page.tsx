@@ -79,7 +79,13 @@ export default function AssessmentFormPage() {
         const [periodRes, submissionRes] = await Promise.all([
           api
             .get("/assessment/my")
-            .then((r) => (r.data as Period[]).find((p) => p.id === id)),
+            .then((r) => {
+              const data = r.data
+              const all: Period[] = Array.isArray(data)
+                ? data
+                : [...(data.open ?? []), ...(data.upcoming ?? []), ...(data.closed ?? []), ...(data.missed ?? [])]
+              return all.find((p) => p.id === id)
+            }),
           api
             .get(`/assessment/periods/${id}/my-submission`)
             .catch(() => ({ data: null })),
@@ -99,6 +105,24 @@ export default function AssessmentFormPage() {
         for (const a of existingAnswers) {
           map[a.questionId] = a.selectedOptions
         }
+
+        // Restore from localStorage draft if server has no submission
+        if (Object.keys(map).length === 0) {
+          try {
+            const draft = localStorage.getItem(`hs_assessment_draft_${id}`)
+            if (draft) {
+              const parsed = JSON.parse(draft) as AnswersMap
+              if (Object.keys(parsed).length > 0) {
+                Object.assign(map, parsed)
+                toast.info("Resumed from your unsaved draft.")
+              }
+            }
+          } catch {}
+        } else {
+          // Server has data, clear any stale localStorage draft
+          try { localStorage.removeItem(`hs_assessment_draft_${id}`) } catch {}
+        }
+
         setAnswers(map)
       } catch {
         toast.error("Failed to load assessment")
@@ -172,8 +196,14 @@ export default function AssessmentFormPage() {
     return () => window.removeEventListener("beforeunload", onBeforeUnload)
   }, [saveStatus])
 
+  const draftKey = `hs_assessment_draft_${id}`
+
   function setAnswer(questionId: string, value: string[]) {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }))
+    setAnswers((prev) => {
+      const next = { ...prev, [questionId]: value }
+      try { localStorage.setItem(draftKey, JSON.stringify(next)) } catch {}
+      return next
+    })
     setSaveStatus("pending")
 
     // Clear any existing debounce timer
@@ -205,6 +235,7 @@ export default function AssessmentFormPage() {
     try {
       await api.post(`/assessment/periods/${id}/submit`, payload)
       setSaveStatus("saved")
+      try { localStorage.removeItem(`hs_assessment_draft_${id}`) } catch {}
       // Reset to idle after 3 seconds
       savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 3000)
     } catch (err: any) {
@@ -292,7 +323,7 @@ export default function AssessmentFormPage() {
               </span>
             )}
             {saveStatus === "saved" && (
-              <span className="flex items-center gap-1.5 text-xs text-green-600">
+              <span className="flex items-center gap-1.5 text-xs text-brand-verdant-600">
                 <CheckCircle2 className="h-3 w-3" />
                 All saved
               </span>
@@ -359,7 +390,7 @@ export default function AssessmentFormPage() {
               <div
                 className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                   catComplete
-                    ? "bg-green-500 text-white"
+                    ? "bg-brand-verdant-500 text-white"
                     : isActive
                       ? "bg-primary/15 text-primary"
                       : "bg-muted-foreground/10 text-muted-foreground"
@@ -407,7 +438,7 @@ export default function AssessmentFormPage() {
                     <div
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                         catComplete
-                          ? "bg-green-500 text-white"
+                          ? "bg-brand-verdant-500 text-white"
                           : isActive
                             ? "bg-primary/15 text-primary"
                             : "bg-muted-foreground/10 text-muted-foreground"
@@ -439,7 +470,7 @@ export default function AssessmentFormPage() {
                     <div className="h-1 w-full rounded-full bg-muted">
                       <div
                         className={`h-1 rounded-full transition-all ${
-                          catComplete ? "bg-green-500" : "bg-primary"
+                          catComplete ? "bg-brand-verdant-500" : "bg-primary"
                         }`}
                         style={{ width: `${catPct}%` }}
                       />
@@ -488,7 +519,7 @@ export default function AssessmentFormPage() {
           {!closed && (
             <div className="flex items-center justify-end gap-3 pb-4">
               {saveStatus === "saved" && (
-                <span className="flex items-center gap-1.5 text-xs text-green-600">
+                <span className="flex items-center gap-1.5 text-xs text-brand-verdant-600">
                   <CheckCircle2 className="h-3 w-3" />
                   All saved
                 </span>
@@ -541,7 +572,7 @@ function QuestionItem({
     <div
       className={`rounded-lg border p-4 transition-colors ${
         answered
-          ? "border-green-300 bg-green-50/30 dark:border-green-800 dark:bg-green-950/20"
+          ? "border-brand-verdant-300 bg-brand-verdant-50/30 dark:border-brand-verdant-800 dark:bg-brand-verdant-900/20"
           : ""
       }`}
     >

@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useAuth } from "@/store/useAuth"
 import { Logo } from "./Logo"
-import { ThemeToggle } from "./ThemeToggle"
+import { ThemeSwitcher } from "./ThemeSwitcher"
 
 const roleTitles: Record<string, string> = {
   ADMINISTRATOR: "Admin Panel",
@@ -25,11 +25,11 @@ export function SiteHeader() {
         <SidebarTrigger className="-ml-1" />
         <div className="flex items-center justify-start gap-2">
           <div className="md:hidden">
-            <Logo className="w-44" />
+            <Logo className="size-9" />
           </div>
         </div>
         <div className="flex w-full justify-end">
-          <ThemeToggle />
+          <ThemeSwitcher />
         </div>
       </div>
     </header>

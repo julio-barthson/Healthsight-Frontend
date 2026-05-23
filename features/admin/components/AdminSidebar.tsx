@@ -106,7 +106,7 @@ export function AdminSidebar({ pendingCount = 0 }: { pendingCount?: number }) {
               className="hover:bg-transparent active:bg-transparent"
             >
               <Link href="/admin/dashboard">
-                <Logo />
+                <Logo className="size-8" />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

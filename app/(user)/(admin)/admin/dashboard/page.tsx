@@ -81,13 +81,15 @@ export default function AdminDashboardPage() {
       .finally(() => setLoading(false))
   }, [])
 
+  // Brand palette per LSHD1 seal quadrants. Amber uses dark text for AA contrast.
   const summaryCards = [
     {
       label: "Active Staff",
       value: stats?.users.active ?? 0,
       sub: `${stats?.users.pending ?? 0} pending`,
       icon: Users,
-      bg: "bg-blue-600",
+      bg: "bg-brand-sky-600",
+      fg: "text-white",
       href: "/admin/users",
     },
     {
@@ -95,7 +97,8 @@ export default function AdminDashboardPage() {
       value: stats?.phcs.total ?? 0,
       sub: "facilities",
       icon: Building2,
-      bg: "bg-green-600",
+      bg: "bg-brand-verdant-600",
+      fg: "text-white",
       href: "/admin/phcs",
     },
     {
@@ -103,7 +106,8 @@ export default function AdminDashboardPage() {
       value: stats?.users.pending ?? 0,
       sub: "awaiting review",
       icon: Clock,
-      bg: "bg-amber-500",
+      bg: "bg-brand-amber-500",
+      fg: "text-brand-charcoal-900",
       href: "/admin/pending-users",
     },
     {
@@ -111,7 +115,8 @@ export default function AdminDashboardPage() {
       value: stats?.assessment.totalSubmissions ?? 0,
       sub: "all time",
       icon: ClipboardList,
-      bg: "bg-purple-600",
+      bg: "bg-brand-charcoal-700",
+      fg: "text-white",
       href: "/admin/assessment/general",
     },
   ]
@@ -120,10 +125,10 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       {/* ── STAT CARDS ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        {summaryCards.map(({ label, value, sub, icon: Icon, bg, href }) => (
+        {summaryCards.map(({ label, value, sub, icon: Icon, bg, fg, href }) => (
           <Link key={label} href={href} className="group">
             <div
-              className={`${bg} flex items-center justify-between rounded-xl px-6 py-5 text-white transition-opacity group-hover:opacity-90`}
+              className={`${bg} ${fg} flex items-center justify-between rounded-xl px-6 py-5 transition-opacity group-hover:opacity-90`}
             >
               <div>
                 <p className="text-sm font-medium opacity-90">{label}</p>
@@ -167,7 +172,7 @@ export default function AdminDashboardPage() {
             >
               <div className="flex items-center gap-3">
                 {p.type === "SAFECARE" ? (
-                  <ShieldCheck className="h-5 w-5 shrink-0 text-blue-500" />
+                  <ShieldCheck className="h-5 w-5 shrink-0 text-brand-sky-500" />
                 ) : (
                   <BarChart3 className="h-5 w-5 shrink-0 text-primary" />
                 )}
@@ -179,7 +184,7 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Badge className="bg-green-100 text-xs text-green-700">
+                <Badge className="bg-brand-verdant-100 text-xs text-brand-verdant-700">
                   ACTIVE
                 </Badge>
                 <Button size="sm" variant="outline" asChild>
@@ -233,12 +238,12 @@ export default function AdminDashboardPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {u.accountStatus === "PENDING" && (
-                        <Badge className="bg-amber-100 text-xs text-amber-700">
+                        <Badge className="bg-brand-amber-100 text-xs text-brand-amber-700">
                           Pending
                         </Badge>
                       )}
                       {isNew(u.createdAt) && u.accountStatus !== "PENDING" && (
-                        <Badge className="bg-blue-100 text-xs text-blue-700">
+                        <Badge className="bg-brand-sky-100 text-xs text-brand-sky-700">
                           New
                         </Badge>
                       )}
@@ -291,7 +296,7 @@ export default function AdminDashboardPage() {
                   {label}
                 </span>
                 {badge !== undefined && badge > 0 && (
-                  <Badge className="bg-amber-100 text-xs text-amber-700">
+                  <Badge className="bg-brand-amber-100 text-xs text-brand-amber-700">
                     {badge}
                   </Badge>
                 )}

@@ -521,7 +521,7 @@ export default function AdminPhcsPage() {
                       variant="secondary"
                       className={
                         phc._count.users > 0
-                          ? "bg-green-100 text-green-700 hover:bg-green-100"
+                          ? "bg-brand-verdant-100 text-brand-verdant-700 hover:bg-brand-verdant-100"
                           : "bg-gray-100 text-gray-500 hover:bg-gray-100"
                       }
                     >
