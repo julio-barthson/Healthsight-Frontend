@@ -12,6 +12,7 @@ import {
   Calendar,
   XCircle,
   Eye,
+  ShieldCheck,
 } from "lucide-react"
 
 import { PageHeader } from "@/components/PageHeader"
@@ -52,6 +53,14 @@ type MyPeriods = {
   missed: MyPeriod[]
 }
 
+function SafeCareBadge() {
+  return (
+    <Badge className="bg-brand-sky-100 text-brand-sky-700 dark:bg-brand-sky-900 dark:text-brand-sky-300">
+      <ShieldCheck className="mr-1 h-3 w-3" /> SafeCare
+    </Badge>
+  )
+}
+
 function EditWindowBadge({ daysLeft }: { daysLeft: number }) {
   if (daysLeft === 0)
     return (
@@ -76,6 +85,7 @@ function OpenCard({ p }: { p: MyPeriod }) {
   const answered = sub?.answeredCount ?? 0
   const pct = total > 0 ? Math.round((answered / total) * 100) : 0
   const isComplete = answered === total && total > 0
+  const isSafeCare = p.type === "SAFECARE"
 
   return (
     <div className="space-y-4 rounded-lg border bg-card p-5">
@@ -83,6 +93,7 @@ function OpenCard({ p }: { p: MyPeriod }) {
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">{p.title}</h3>
+            {isSafeCare && <SafeCareBadge />}
             {isComplete ? (
               <Badge className="bg-brand-verdant-100 text-brand-verdant-700 dark:bg-brand-verdant-900 dark:text-brand-verdant-300">
                 <CheckCircle2 className="mr-1 h-3 w-3" /> Submitted
@@ -101,6 +112,7 @@ function OpenCard({ p }: { p: MyPeriod }) {
               <Clock className="h-3 w-3" />
               Closes {format(new Date(p.endDate), "dd MMM yyyy, HH:mm")}
             </span>
+            {isSafeCare && <span>Every 2 years</span>}
             {sub?.daysLeft !== undefined && (
               <EditWindowBadge daysLeft={sub.daysLeft} />
             )}
@@ -128,12 +140,14 @@ function OpenCard({ p }: { p: MyPeriod }) {
 }
 
 function UpcomingCard({ p }: { p: MyPeriod }) {
+  const isSafeCare = p.type === "SAFECARE"
   return (
     <div className="space-y-2 rounded-lg border border-dashed bg-muted/30 p-5 opacity-70">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">{p.title}</h3>
+            {isSafeCare && <SafeCareBadge />}
             <Badge variant="outline" className="text-brand-sky-600 dark:text-brand-sky-400">
               <Calendar className="mr-1 h-3 w-3" /> Upcoming
             </Badge>
@@ -141,11 +155,14 @@ function UpcomingCard({ p }: { p: MyPeriod }) {
           {p.description && (
             <p className="text-sm text-muted-foreground">{p.description}</p>
           )}
-          <p className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            Opens {format(new Date(p.startDate), "dd MMM yyyy")} &mdash; Closes{" "}
-            {format(new Date(p.endDate), "dd MMM yyyy")}
-          </p>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Opens {format(new Date(p.startDate), "dd MMM yyyy")} &mdash; Closes{" "}
+              {format(new Date(p.endDate), "dd MMM yyyy")}
+            </span>
+            {isSafeCare && <span>Every 2 years</span>}
+          </div>
         </div>
       </div>
     </div>
@@ -156,6 +173,7 @@ function ClosedCard({ p }: { p: MyPeriod }) {
   const sub = p.mySubmission!
   const total = p.totalQuestions
   const answered = sub.answeredCount
+  const isSafeCare = p.type === "SAFECARE"
 
   return (
     <div className="space-y-3 rounded-lg border bg-card p-5">
@@ -163,6 +181,7 @@ function ClosedCard({ p }: { p: MyPeriod }) {
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">{p.title}</h3>
+            {isSafeCare && <SafeCareBadge />}
             <Badge className="bg-brand-verdant-100 text-brand-verdant-700 dark:bg-brand-verdant-900 dark:text-brand-verdant-300">
               <CheckCircle2 className="mr-1 h-3 w-3" /> Submitted
             </Badge>
@@ -186,12 +205,14 @@ function ClosedCard({ p }: { p: MyPeriod }) {
 }
 
 function MissedCard({ p }: { p: MyPeriod }) {
+  const isSafeCare = p.type === "SAFECARE"
   return (
     <div className="space-y-2 rounded-lg border border-brand-crimson-200 bg-brand-crimson-50/40 p-5 dark:border-brand-crimson-900 dark:bg-brand-crimson-900/20">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">{p.title}</h3>
+            {isSafeCare && <SafeCareBadge />}
             <Badge variant="destructive" className="opacity-80">
               <XCircle className="mr-1 h-3 w-3" /> Missed
             </Badge>
