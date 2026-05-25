@@ -13,8 +13,6 @@ import {
   MoreHorizontal,
   Eye,
   Pencil,
-  ChevronDown,
-  ChevronRight,
   GripVertical,
 } from "lucide-react"
 import {
@@ -167,7 +165,6 @@ const periodSchema = z.object({
   description: z.string().optional(),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
-  questionIds: z.array(z.string()),
 })
 
 type CategoryFormValues = z.infer<typeof categorySchema>
@@ -819,8 +816,6 @@ export default function GeneralAssessmentPage() {
       <PeriodSheet
         open={pSheet.open}
         data={pSheet.data}
-        questions={questions}
-        categories={sortedCategories}
         onClose={() => setPSheet({ open: false })}
         onSaved={fetchAll}
       />
@@ -1225,15 +1220,11 @@ function QuestionSheet({
 function PeriodSheet({
   open,
   data,
-  questions,
-  categories,
   onClose,
   onSaved,
 }: {
   open: boolean
   data?: Period
-  questions: Question[]
-  categories: Category[]
   onClose: () => void
   onSaved: () => void
 }) {
@@ -1244,75 +1235,18 @@ function PeriodSheet({
       description: "",
       startDate: "",
       endDate: "",
-      questionIds: [],
     },
   })
-  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!open) return
-    if (data) {
-      api.get(`/assessment/periods/${data.id}`).then((res) => {
-        const existing =
-          res.data.questions?.map((pq: any) => pq.question.id) ?? []
-        form.reset({
-          title: data.title,
-          description: data.description ?? "",
-          startDate: data.startDate ? data.startDate.slice(0, 16) : "",
-          endDate: data.endDate ? data.endDate.slice(0, 16) : "",
-          questionIds: existing,
-        })
-        const cats = new Set(
-          questions
-            .filter((q) => existing.includes(q.id))
-            .map((q) => q.category.id)
-        )
-        setExpandedCats(cats)
-      })
-    } else {
-      form.reset({
-        title: "",
-        description: "",
-        startDate: "",
-        endDate: "",
-        questionIds: [],
-      })
-      setExpandedCats(new Set())
-    }
-  }, [open, data])
-
-  function toggleQuestion(qId: string, checked: boolean) {
-    const current = form.getValues("questionIds") ?? []
-    form.setValue(
-      "questionIds",
-      checked ? [...current, qId] : current.filter((id) => id !== qId)
-    )
-  }
-
-  function toggleCategory(catId: string) {
-    setExpandedCats((prev) => {
-      const next = new Set(prev)
-      next.has(catId) ? next.delete(catId) : next.add(catId)
-      return next
+    form.reset({
+      title: data?.title ?? "",
+      description: data?.description ?? "",
+      startDate: data?.startDate ? data.startDate.slice(0, 16) : "",
+      endDate: data?.endDate ? data.endDate.slice(0, 16) : "",
     })
-  }
-
-  function selectAllInCategory(catId: string, checked: boolean) {
-    const catQuestionIds = questions
-      .filter((q) => q.category.id === catId)
-      .map((q) => q.id)
-    const current = form.getValues("questionIds") ?? []
-    if (checked) {
-      form.setValue("questionIds", [
-        ...new Set([...current, ...catQuestionIds]),
-      ])
-    } else {
-      form.setValue(
-        "questionIds",
-        current.filter((id) => !catQuestionIds.includes(id))
-      )
-    }
-  }
+  }, [open, data])
 
   async function onSubmit(values: PeriodFormValues) {
     const payload = {
@@ -1327,7 +1261,7 @@ function PeriodSheet({
         toast.success("Period updated")
       } else {
         await api.post("/assessment/periods", payload)
-        toast.success("Period created")
+        toast.success("Period created — all questions included automatically")
       }
       onClose()
       onSaved()
@@ -1338,8 +1272,6 @@ function PeriodSheet({
       )
     }
   }
-
-  const selectedIds = form.watch("questionIds") ?? []
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
@@ -1411,98 +1343,6 @@ function PeriodSheet({
                   </FormItem>
                 )}
               />
-
-              <Separator />
-
-              {/* Question selection */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Questions</Label>
-                  <span className="text-xs text-muted-foreground">
-                    {selectedIds.length} selected
-                  </span>
-                </div>
-
-                {categories.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    No questions available. Create categories and questions
-                    first.
-                  </p>
-                )}
-
-                {categories.map((cat) => {
-                  const catQs = questions
-                    .filter((q) => q.category.id === cat.id)
-                    .sort((a, b) => a.order - b.order)
-                  if (catQs.length === 0) return null
-                  const expanded = expandedCats.has(cat.id)
-                  const selectedInCat = catQs.filter((q) =>
-                    selectedIds.includes(q.id)
-                  ).length
-                  const allSelected = selectedInCat === catQs.length
-
-                  return (
-                    <div key={cat.id} className="rounded-md border">
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50"
-                        onClick={() => toggleCategory(cat.id)}
-                      >
-                        {expanded ? (
-                          <ChevronDown className="h-4 w-4 shrink-0" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 shrink-0" />
-                        )}
-                        <span className="flex-1 font-medium">{cat.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {selectedInCat}/{catQs.length}
-                        </span>
-                      </button>
-
-                      {expanded && (
-                        <div className="space-y-1.5 border-t px-3 pt-2 pb-2">
-                          <div className="flex items-center gap-2 pb-1">
-                            <Checkbox
-                              id={`cat-all-${cat.id}`}
-                              checked={allSelected}
-                              onCheckedChange={(v) =>
-                                selectAllInCategory(cat.id, !!v)
-                              }
-                            />
-                            <Label
-                              htmlFor={`cat-all-${cat.id}`}
-                              className="cursor-pointer text-xs text-muted-foreground"
-                            >
-                              Select all in this category
-                            </Label>
-                          </div>
-                          {catQs.map((q, idx) => (
-                            <div key={q.id} className="flex items-start gap-2">
-                              <Checkbox
-                                id={`q-${q.id}`}
-                                checked={selectedIds.includes(q.id)}
-                                onCheckedChange={(v) =>
-                                  toggleQuestion(q.id, !!v)
-                                }
-                                className="mt-0.5"
-                              />
-                              <Label
-                                htmlFor={`q-${q.id}`}
-                                className="cursor-pointer text-sm leading-snug font-normal"
-                              >
-                                <span className="mr-1 text-xs text-muted-foreground">
-                                  {idx + 1}.
-                                </span>
-                                {q.text}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
             </form>
           </Form>
         </div>

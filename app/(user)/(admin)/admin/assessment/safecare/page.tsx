@@ -26,9 +26,6 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Sheet,
@@ -133,7 +130,6 @@ const periodSchema = z.object({
   description: z.string().optional(),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
-  questionIds: z.array(z.string()),
 })
 
 type PeriodFormValues = z.infer<typeof periodSchema>
@@ -410,8 +406,6 @@ export default function SafecareAdminPage() {
       <PeriodSheet
         open={pSheet.open}
         data={pSheet.data}
-        questions={questions}
-        categories={categories}
         onClose={() => setPSheet({ open: false })}
         onSaved={fetchAll}
       />
@@ -517,15 +511,11 @@ function QuestionBankView({
 function PeriodSheet({
   open,
   data,
-  questions,
-  categories,
   onClose,
   onSaved,
 }: {
   open: boolean
   data?: Period
-  questions: Question[]
-  categories: Category[]
   onClose: () => void
   onSaved: () => void
 }) {
@@ -537,74 +527,19 @@ function PeriodSheet({
       description: "",
       startDate: "",
       endDate: "",
-      questionIds: [],
     },
   })
-  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!open) return
-    if (data) {
-      api.get(`/assessment/periods/${data.id}`).then((res) => {
-        const existing =
-          res.data.questions?.map((pq: any) => pq.question.id) ?? []
-        form.reset({
-          quarter: (data.quarter as Quarter) ?? "Q1",
-          year: data.year ?? CURRENT_YEAR,
-          description: data.description ?? "",
-          startDate: data.startDate ? data.startDate.slice(0, 10) : "",
-          endDate: data.endDate ? data.endDate.slice(0, 10) : "",
-          questionIds: existing,
-        })
-        setExpandedCats(
-          new Set(
-            questions
-              .filter((q) => existing.includes(q.id))
-              .map((q) => q.category.id)
-          )
-        )
-      })
-    } else {
-      form.reset({
-        quarter: "Q1",
-        year: CURRENT_YEAR,
-        description: "",
-        startDate: "",
-        endDate: "",
-        questionIds: [],
-      })
-      setExpandedCats(new Set())
-    }
-  }, [open, data])
-
-  function toggleCat(catId: string) {
-    setExpandedCats((prev) => {
-      const n = new Set(prev)
-      n.has(catId) ? n.delete(catId) : n.add(catId)
-      return n
+    form.reset({
+      quarter: (data?.quarter as Quarter) ?? "Q1",
+      year: data?.year ?? CURRENT_YEAR,
+      description: data?.description ?? "",
+      startDate: data?.startDate ? data.startDate.slice(0, 10) : "",
+      endDate: data?.endDate ? data.endDate.slice(0, 10) : "",
     })
-  }
-
-  function toggleQuestion(qId: string, checked: boolean) {
-    const cur = form.getValues("questionIds") ?? []
-    form.setValue(
-      "questionIds",
-      checked ? [...cur, qId] : cur.filter((id) => id !== qId)
-    )
-  }
-
-  function selectAllInCat(catId: string, checked: boolean) {
-    const catIds = questions
-      .filter((q) => q.category.id === catId)
-      .map((q) => q.id)
-    const cur = form.getValues("questionIds") ?? []
-    form.setValue(
-      "questionIds",
-      checked
-        ? [...new Set([...cur, ...catIds])]
-        : cur.filter((id) => !catIds.includes(id))
-    )
-  }
+  }, [open, data])
 
   async function onSubmit(values: PeriodFormValues) {
     const title = `${values.quarter} ${values.year} SafeCare Assessment`
@@ -621,7 +556,7 @@ function PeriodSheet({
         toast.success("Period updated")
       } else {
         await api.post("/assessment/periods", payload)
-        toast.success("Period created")
+        toast.success("Period created — all SafeCare indicators included automatically")
       }
       onClose()
       onSaved()
@@ -633,7 +568,6 @@ function PeriodSheet({
     }
   }
 
-  const selectedIds = form.watch("questionIds") ?? []
   const quarter = form.watch("quarter")
   const year = form.watch("year")
 
@@ -763,87 +697,9 @@ function PeriodSheet({
                 />
               </div>
 
-              <Separator />
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Indicators</Label>
-                  <span className="text-xs text-muted-foreground">
-                    {selectedIds.length} selected
-                  </span>
-                </div>
-                {categories.map((cat) => {
-                  const catQs = questions
-                    .filter((q) => q.category.id === cat.id)
-                    .sort((a, b) => a.order - b.order)
-                  if (catQs.length === 0) return null
-                  const selInCat = catQs.filter((q) =>
-                    selectedIds.includes(q.id)
-                  ).length
-                  const allSel = selInCat === catQs.length
-                  const isOpen = expandedCats.has(cat.id)
-
-                  return (
-                    <div key={cat.id} className="rounded-md border">
-                      <button
-                        type="button"
-                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted/50"
-                        onClick={() => toggleCat(cat.id)}
-                      >
-                        {isOpen ? (
-                          <ChevronDown className="h-4 w-4 shrink-0" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 shrink-0" />
-                        )}
-                        <span className="flex-1 font-medium">{cat.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {selInCat}/{catQs.length}
-                        </span>
-                      </button>
-                      {isOpen && (
-                        <div className="space-y-1.5 border-t px-3 pt-2 pb-2">
-                          <div className="flex items-center gap-2 pb-1">
-                            <Checkbox
-                              id={`all-${cat.id}`}
-                              checked={allSel}
-                              onCheckedChange={(v) =>
-                                selectAllInCat(cat.id, !!v)
-                              }
-                            />
-                            <Label
-                              htmlFor={`all-${cat.id}`}
-                              className="cursor-pointer text-xs text-muted-foreground"
-                            >
-                              Select all
-                            </Label>
-                          </div>
-                          {catQs.map((q, idx) => (
-                            <div key={q.id} className="flex items-start gap-2">
-                              <Checkbox
-                                id={`q-${q.id}`}
-                                checked={selectedIds.includes(q.id)}
-                                onCheckedChange={(v) =>
-                                  toggleQuestion(q.id, !!v)
-                                }
-                                className="mt-0.5"
-                              />
-                              <Label
-                                htmlFor={`q-${q.id}`}
-                                className="cursor-pointer text-sm leading-snug font-normal"
-                              >
-                                <span className="mr-1 text-xs text-muted-foreground">
-                                  {idx + 1}.
-                                </span>
-                                {q.text}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+              <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                All {120} SafeCare indicators across 12 domains are included automatically.
+              </p>
             </form>
           </Form>
         </div>
