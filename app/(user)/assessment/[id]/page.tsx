@@ -78,14 +78,15 @@ export default function AssessmentFormPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [periodRes, submissionRes] = await Promise.all([
-          api
-            .get("/assessment/my")
-            .then((r) => r.data.find((p: Period) => p.id === id)),
-          api
-            .get(`/assessment/periods/${id}/my-submission`)
-            .catch(() => ({ data: null })),
-        ])
+        // One call for this period only. The /assessment/my list intentionally
+        // omits question bodies, so it cannot be used to load the form.
+        const detail = await api
+          .get(`/assessment/periods/${id}/my`)
+          .then((r) => r.data)
+          .catch(() => null)
+
+        const periodRes = detail
+        const submissionRes = { data: detail?.mySubmission ?? null }
 
         if (!periodRes) {
           toast.error("Assessment not found or not accessible")
