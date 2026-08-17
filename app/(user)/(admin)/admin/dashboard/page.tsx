@@ -10,6 +10,10 @@ import {
   ClipboardList,
   BarChart3,
   CheckCircle2,
+  UserRound,
+  Stethoscope,
+  TrendingUp,
+  Download,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,17 +22,24 @@ import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import api from "@/lib/api"
 
+type ScreeningByType = { type: string; count: number }
+
 type Stats = {
   users: { total: number; active: number; pending: number }
   phcs: { total: number }
   assessment: {
-    activePeriods: {
-      id: string
-      title: string
-      type: string
-      submissions: number
-    }[]
+    activePeriods: { id: string; title: string; type: string; submissions: number }[]
     totalSubmissions: number
+  }
+  clinical: {
+    patients: { total: number; thisMonth: number }
+    screenings: {
+      total: number
+      completed: number
+      referred: number
+      completionRate: number
+      byType: ScreeningByType[]
+    }
   }
 }
 
@@ -41,10 +52,16 @@ type AdminUser = {
   createdAt: string
 }
 
+const SCREENING_LABELS: Record<string, string> = {
+  HYPERTENSION: "Hypertension",
+  DIABETES: "Diabetes",
+  CERVICAL_CANCER: "Cervical Cancer",
+  BREAST_CANCER: "Breast Cancer",
+  PSA: "PSA",
+}
+
 function timeAgo(dateStr: string): string {
-  const days = Math.floor(
-    (Date.now() - new Date(dateStr).getTime()) / 86_400_000
-  )
+  const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000)
   if (days < 1) return "Today"
   if (days < 7) return `${days}d ago`
   if (days < 30) return `${Math.floor(days / 7)}w ago`
@@ -64,24 +81,19 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     Promise.all([
       api.get<Stats>("/admin/stats"),
-      api.get<AdminUser[]>("/admin/users"),
+      api.get<{ data: AdminUser[] }>("/admin/users"),
     ])
       .then(([statsRes, usersRes]) => {
         setStats(statsRes.data)
         setRecentUsers(
-          [...usersRes.data]
-            .sort(
-              (a, b) =>
-                new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime()
-            )
-            .slice(0, 6)
+          [...(usersRes.data as any).data ?? usersRes.data]
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 6),
         )
       })
       .finally(() => setLoading(false))
   }, [])
 
-  // Brand palette per LSHD1 seal quadrants. Amber uses dark text for AA contrast.
   const summaryCards = [
     {
       label: "Active Staff",
@@ -121,15 +133,40 @@ export default function AdminDashboardPage() {
     },
   ]
 
+  const clinicalCards = [
+    {
+      label: "Total Patients",
+      value: stats?.clinical.patients.total ?? 0,
+      sub: `+${stats?.clinical.patients.thisMonth ?? 0} this month`,
+      icon: UserRound,
+      color: "text-brand-sky-600",
+      bg: "bg-brand-sky-50 dark:bg-brand-sky-900/30",
+    },
+    {
+      label: "Total Screenings",
+      value: stats?.clinical.screenings.total ?? 0,
+      sub: `${stats?.clinical.screenings.completed ?? 0} completed`,
+      icon: Stethoscope,
+      color: "text-brand-verdant-600",
+      bg: "bg-brand-verdant-50 dark:bg-brand-verdant-900/30",
+    },
+    {
+      label: "Completion Rate",
+      value: `${stats?.clinical.screenings.completionRate ?? 0}%`,
+      sub: `${stats?.clinical.screenings.referred ?? 0} referred`,
+      icon: TrendingUp,
+      color: "text-brand-amber-600",
+      bg: "bg-brand-amber-50 dark:bg-brand-amber-900/30",
+    },
+  ]
+
   return (
     <div className="space-y-6">
-      {/* ── STAT CARDS ──────────────────────────────────────────────── */}
+      {/* ── STAFF STAT CARDS ─────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map(({ label, value, sub, icon: Icon, bg, fg, href }) => (
           <Link key={label} href={href} className="group">
-            <div
-              className={`${bg} ${fg} flex items-center justify-between rounded-xl px-6 py-5 transition-opacity group-hover:opacity-90`}
-            >
+            <div className={`${bg} ${fg} flex items-center justify-between rounded-xl px-6 py-5 transition-opacity group-hover:opacity-90`}>
               <div>
                 <p className="text-sm font-medium opacity-90">{label}</p>
                 {loading ? (
@@ -145,12 +182,84 @@ export default function AdminDashboardPage() {
         ))}
       </div>
 
-      {/* ── ACTIVE ASSESSMENT PERIODS ───────────────────────────────── */}
+      {/* ── CLINICAL STATS ───────────────────────────────────────────────── */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">
-            Active Assessment Periods
-          </h2>
+          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">Clinical Overview</h2>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const a = document.createElement("a")
+                a.href = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/patients/export/csv`
+                a.download = "patients.csv"
+                a.click()
+              }}
+            >
+              <Download className="mr-1.5 h-3.5 w-3.5" />
+              Patients CSV
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const a = document.createElement("a")
+                a.href = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/admin/export/screenings`
+                a.download = "screenings.csv"
+                a.click()
+              }}
+            >
+              <Download className="mr-1.5 h-3.5 w-3.5" />
+              Screenings CSV
+            </Button>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {clinicalCards.map(({ label, value, sub, icon: Icon, color, bg }) => (
+            <div key={label} className={`rounded-lg border p-4 ${bg}`}>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">{label}</p>
+                <Icon className={`h-4 w-4 ${color}`} />
+              </div>
+              {loading ? (
+                <Skeleton className="mt-2 h-7 w-16" />
+              ) : (
+                <p className="mt-1 text-2xl font-bold">{value}</p>
+              )}
+              {!loading && <p className="mt-0.5 text-xs text-muted-foreground">{sub}</p>}
+            </div>
+          ))}
+        </div>
+
+        {/* Screenings by type */}
+        {!loading && (stats?.clinical.screenings.byType.length ?? 0) > 0 && (
+          <div className="rounded-lg border p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Screenings by Type</p>
+            <div className="space-y-2">
+              {stats?.clinical.screenings.byType.map((s) => {
+                const pct = stats.clinical.screenings.total > 0
+                  ? Math.round((s.count / stats.clinical.screenings.total) * 100)
+                  : 0
+                return (
+                  <div key={s.type} className="space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>{SCREENING_LABELS[s.type] ?? s.type}</span>
+                      <span className="font-medium">{s.count} ({pct}%)</span>
+                    </div>
+                    <Progress value={pct} className="h-1.5" />
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── ACTIVE ASSESSMENT PERIODS ────────────────────────────────────── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">Active Assessment Periods</h2>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/admin/assessment/general">View all</Link>
           </Button>
@@ -166,10 +275,7 @@ export default function AdminDashboardPage() {
 
         {!loading &&
           stats?.assessment.activePeriods?.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center justify-between rounded-lg border bg-card px-5 py-4"
-            >
+            <div key={p.id} className="flex items-center justify-between rounded-lg border bg-card px-5 py-4">
               <div className="flex items-center gap-3">
                 {p.type === "SAFECARE" ? (
                   <ShieldCheck className="h-5 w-5 shrink-0 text-brand-sky-500" />
@@ -178,17 +284,13 @@ export default function AdminDashboardPage() {
                 )}
                 <div>
                   <p className="text-sm font-medium">{p.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {p.submissions} submission{p.submissions !== 1 ? "s" : ""}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{p.submissions} submission{p.submissions !== 1 ? "s" : ""}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Badge className="bg-brand-verdant-100 text-xs text-brand-verdant-700">
-                  ACTIVE
-                </Badge>
+                <Badge className="bg-brand-verdant-100 text-xs text-brand-verdant-700">ACTIVE</Badge>
                 <Button size="sm" variant="outline" asChild>
-                  <Link href={`/admin/assessment/general/${p.id}`}>
+                  <Link href={`/admin/assessment/${p.type === "SAFECARE" ? "safecare" : "general"}/${p.id}`}>
                     Results
                   </Link>
                 </Button>
@@ -197,9 +299,8 @@ export default function AdminDashboardPage() {
           ))}
       </div>
 
-      {/* ── RECENT USERS + QUICK LINKS ───────────────────────────────── */}
+      {/* ── RECENT USERS + QUICK LINKS ───────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-5">
-        {/* Recent users */}
         <Card className="gap-1 lg:col-span-3">
           <CardHeader className="border-b">
             <div className="flex items-center justify-between">
@@ -212,10 +313,7 @@ export default function AdminDashboardPage() {
           <CardContent className="divide-y p-0">
             {loading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between px-6 py-4"
-                  >
+                  <div key={i} className="flex items-center justify-between px-6 py-4">
                     <div className="space-y-1.5">
                       <Skeleton className="h-4 w-40" />
                       <Skeleton className="h-3 w-24" />
@@ -224,66 +322,35 @@ export default function AdminDashboardPage() {
                   </div>
                 ))
               : recentUsers.map((u) => (
-                  <div
-                    key={u.id}
-                    className="flex items-center justify-between px-6 py-4"
-                  >
+                  <div key={u.id} className="flex items-center justify-between px-6 py-4">
                     <div>
-                      <p className="text-sm font-medium">
-                        {u.firstName} {u.lastName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {u.roles.map((r) => r.role.label).join(", ")}
-                      </p>
+                      <p className="text-sm font-medium">{u.firstName} {u.lastName}</p>
+                      <p className="text-xs text-muted-foreground">{u.roles.map((r) => r.role.label).join(", ")}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       {u.accountStatus === "PENDING" && (
-                        <Badge className="bg-brand-amber-100 text-xs text-brand-amber-700">
-                          Pending
-                        </Badge>
+                        <Badge className="bg-brand-amber-100 text-xs text-brand-amber-700">Pending</Badge>
                       )}
                       {isNew(u.createdAt) && u.accountStatus !== "PENDING" && (
-                        <Badge className="bg-brand-sky-100 text-xs text-brand-sky-700">
-                          New
-                        </Badge>
+                        <Badge className="bg-brand-sky-100 text-xs text-brand-sky-700">New</Badge>
                       )}
-                      <span className="text-xs text-muted-foreground">
-                        {timeAgo(u.createdAt)}
-                      </span>
+                      <span className="text-xs text-muted-foreground">{timeAgo(u.createdAt)}</span>
                     </div>
                   </div>
                 ))}
           </CardContent>
         </Card>
 
-        {/* Quick links */}
         <Card className="gap-1 lg:col-span-2">
           <CardHeader className="border-b">
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {[
-              {
-                label: "Review pending users",
-                href: "/admin/pending-users",
-                icon: Clock,
-                badge: stats?.users.pending,
-              },
-              {
-                label: "General Assessment",
-                href: "/admin/assessment/general",
-                icon: ClipboardList,
-              },
-              {
-                label: "SafeCare Assessment",
-                href: "/admin/assessment/safecare",
-                icon: ShieldCheck,
-              },
-              {
-                label: "PHC Map View",
-                href: "/admin/phcs/map",
-                icon: Building2,
-              },
+              { label: "Review pending users", href: "/admin/pending-users", icon: Clock, badge: stats?.users.pending },
+              { label: "General Assessment", href: "/admin/assessment/general", icon: ClipboardList },
+              { label: "SafeCare Assessment", href: "/admin/assessment/safecare", icon: ShieldCheck },
+              { label: "PHC Map View", href: "/admin/phcs/map", icon: Building2 },
               { label: "User Management", href: "/admin/users", icon: Users },
             ].map(({ label, href, icon: Icon, badge }) => (
               <Link
@@ -296,9 +363,7 @@ export default function AdminDashboardPage() {
                   {label}
                 </span>
                 {badge !== undefined && badge > 0 && (
-                  <Badge className="bg-brand-amber-100 text-xs text-brand-amber-700">
-                    {badge}
-                  </Badge>
+                  <Badge className="bg-brand-amber-100 text-xs text-brand-amber-700">{badge}</Badge>
                 )}
               </Link>
             ))}

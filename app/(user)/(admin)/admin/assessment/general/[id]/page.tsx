@@ -53,6 +53,9 @@ type SubmissionSummary = {
   answeredCount: number
   totalQuestions: number
   updatedAt: string
+  // The facility being assessed. A submission belongs to the PHC, not the
+  // person — `user` is null where the recording staff account no longer exists.
+  phc: { id: string; name: string; lga: { name: string } | null } | null
   user: {
     id: string
     firstName: string
@@ -61,7 +64,7 @@ type SubmissionSummary = {
     phc: { name: string } | null
     lga: { name: string } | null
     roles: { role: { label: string } }[]
-  }
+  } | null
 }
 
 type Results = {
@@ -133,7 +136,7 @@ export default function PeriodResultsPage() {
     setDetailLoading(true)
     try {
       const res = await api.get(
-        `/assessment/periods/${id}/results/${sub.user.id}`
+        `/assessment/periods/${id}/results/${sub.phc?.id ?? ""}`
       )
       setUserDetail(res.data)
     } catch {
@@ -346,16 +349,24 @@ export default function PeriodResultsPage() {
                 onClick={() => openUserDetail(s)}
               >
                 <TableCell>
-                  <p className="font-medium">
-                    {s.user.firstName} {s.user.lastName}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {s.user.email}
-                  </p>
+                  {s.user ? (
+                    <>
+                      <p className="font-medium">
+                        {s.user.firstName} {s.user.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {s.user.email}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm italic text-muted-foreground">
+                      Staff account removed
+                    </p>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
-                    {s.user.roles.map((r, i) => (
+                    {s.user?.roles.map((r, i) => (
                       <Badge key={i} variant="outline" className="text-xs">
                         {r.role.label}
                       </Badge>
@@ -363,7 +374,7 @@ export default function PeriodResultsPage() {
                   </div>
                 </TableCell>
                 <TableCell className="text-sm">
-                  {s.user.phc?.name ?? "—"}
+                  {s.phc?.name ?? s.user?.phc?.name ?? "—"}
                 </TableCell>
                 <TableCell>
                   <div className="space-y-1">
@@ -400,8 +411,10 @@ export default function PeriodResultsPage() {
         <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {selectedUser?.user.firstName} {selectedUser?.user.lastName}
-              &apos;s Submission
+              {selectedUser?.phc?.name ?? "Facility"} &mdash;{" "}
+              {selectedUser?.user
+                ? `recorded by ${selectedUser.user.firstName} ${selectedUser.user.lastName}`
+                : "staff account removed"}
             </DialogTitle>
           </DialogHeader>
           {detailLoading && (

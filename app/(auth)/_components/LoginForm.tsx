@@ -207,7 +207,7 @@ export const LoginForm = () => {
                       </FormLabel>
                       <Link
                         href="/forgot-password"
-                        className="font-ui text-sm font-medium text-primary hover:underline"
+                        className="font-ui text-xs font-medium text-primary hover:underline"
                       >
                         Forgot password?
                       </Link>
